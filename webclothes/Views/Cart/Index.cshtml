@@ -1,0 +1,99 @@
+@model List<webclothes.Models.CartItem>
+
+@{
+    ViewData["Title"] = "Giỏ hàng";
+}
+
+<div class="container" style="margin-top: 50px; min-height: 60vh;">
+    <h2 class="mb-5 text-center" style="font-family: 'Playfair Display', serif; text-transform: uppercase; letter-spacing: 2px;">
+        Giỏ hàng của bạn
+    </h2>
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="text-center">
+            <p class="text-muted mb-4">Giỏ hàng của bạn đang trống.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-dark rounded-0 px-4 py-2" style="font-family: 'Montserrat', sans-serif; letter-spacing: 1px;">
+                TIẾP TỤC MUA SẮM
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-lg-8 mb-4">
+                <div class="table-responsive">
+                    <table class="table" style="vertical-align: middle;">
+                        <thead style="border-bottom: 2px solid #1a1a1a;">
+                            <tr style="text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">
+                                <th scope="col" class="border-0 pb-3">Sản phẩm</th>
+                                <th scope="col" class="border-0 pb-3 text-center">Đơn giá</th>
+                                <th scope="col" class="border-0 pb-3 text-center">Số lượng</th>
+                                <th scope="col" class="border-0 pb-3 text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr style="border-bottom: 1px solid #ebebeb;">
+                                    <td class="py-4">
+                                        <div class="d-flex align-items-center">
+                                            <div style="width: 80px; height: 100px; background-color: #f0f0f0; margin-right: 20px; overflow: hidden;">
+                                                <img src="https://images.unsplash.com/photo-1515347619253-122cb41a4a16?q=80&w=200&auto=format&fit=crop" alt="@item.ProductName" style="width: 100%; height: 100%; object-fit: cover;" />
+                                            </div>
+                                            <span style="font-weight: 500;">@item.ProductName</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 text-center">
+                                        @item.Price.ToString("N0") đ
+                                    </td>
+                                    <td class="py-4 text-center">
+                                        <div class="d-flex justify-content-center align-items-center">
+                                            <a asp-controller="Cart" asp-action="DecreaseQuantity" asp-route-productId="@item.ProductId" class="btn btn-sm btn-outline-secondary px-2 py-0" style="border-radius: 0;">-</a>
+                                            <span class="px-3" style="min-width: 40px; text-align: center; font-weight: 500;">@item.Quantity</span>
+                                            <a asp-controller="Cart" asp-action="IncreaseQuantity" asp-route-productId="@item.ProductId" class="btn btn-sm btn-outline-secondary px-2 py-0" style="border-radius: 0;">+</a>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 text-end">
+                                        <a asp-action="RemoveFromCart" asp-route-productId="@item.ProductId" class="text-danger" style="text-decoration: none; font-size: 0.9rem; font-weight: 500;">
+                                            XÓA
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="p-4" style="background-color: #f9f9f9; border: 1px solid #ebebeb;">
+                    <h4 class="mb-4" style="font-family: 'Playfair Display', serif; font-size: 1.2rem; text-transform: uppercase;">
+                        Tóm tắt đơn hàng
+                    </h4>
+
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Tổng phụ</span>
+                        <span style="font-weight: 500;">@Model.Sum(x => x.Price * x.Quantity).ToString("N0") đ</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-4 border-bottom pb-3">
+                        <span class="text-muted">Giao hàng</span>
+                        <span>Miễn phí</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-4">
+                        <span style="font-weight: 600; font-size: 1.1rem;">TỔNG CỘNG</span>
+                        <span style="font-weight: 600; font-size: 1.1rem; color: #1a1a1a;">
+                            @Model.Sum(x => x.Price * x.Quantity).ToString("N0") đ
+                        </span>
+                    </div>
+
+                    <a asp-controller="Cart" asp-action="Checkout" class="btn btn-dark w-100 rounded-0 py-3" style="font-weight: 600; letter-spacing: 1px;">
+                        TIẾN HÀNH THANH TOÁN
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,41 @@
+@model webclothes.Models.Category
+@{
+    ViewData["Title"] = "Thêm danh mục";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="card shadow col-md-6 mx-auto">
+    <div class="card-header bg-primary text-white">
+        <h4 class="m-0">Thêm danh mục mới</h4>
+    </div>
+    <div class="card-body">
+        <form asp-action="Create">
+            <div class="form-group mb-3">
+                <label class="control-label">Tên danh mục</label>
+                <input asp-for="Name" class="form-control" placeholder="Ví dụ: Đồ nam, Áo sơ mi..." />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-3">
+                <label class="control-label">Mô tả</label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-group mb-3">
+                <label class="control-label">Danh mục cha (Tùy chọn)</label>
+                <select asp-for="ParentCategoryId" class="form-select">
+                    <option value="">-- Thuộc danh mục gốc --</option>
+                    @if (ViewBag.ParentCategories != null)
+                    {
+                        foreach (var parent in (List<webclothes.Models.Category>)ViewBag.ParentCategories)
+                        {
+                            <option value="@parent.Id">@parent.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Lưu lại</button>
+                <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>

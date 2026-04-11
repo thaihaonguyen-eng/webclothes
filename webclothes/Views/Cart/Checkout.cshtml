@@ -1,0 +1,60 @@
+@model IEnumerable<webclothes.Models.CartItem>
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+
+<div class="container py-5" style="min-height: 70vh;">
+    <h2 class="mb-4 fw-bold text-center" style="letter-spacing: 1px;" data-aos="fade-down">XÁC NHẬN ĐƠN HÀNG</h2>
+
+    <div class="row g-5">
+        <div class="col-md-7" data-aos="fade-right">
+            <div class="p-4 bg-white rounded shadow-sm border">
+                <h4 class="mb-4 pb-2 border-bottom fw-bold"><i class="fa-solid fa-address-card me-2"></i> Thông tin giao hàng</h4>
+                <form asp-action="Checkout" method="post">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Họ và Tên</label>
+                        <input type="text" name="customerName" class="form-control form-control-lg" required />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Số điện thoại</label>
+                            <input type="tel" name="phone" class="form-control form-control-lg" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Email (để nhận hóa đơn)</label>
+                            <input type="email" name="email" class="form-control form-control-lg" required />
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Địa chỉ giao hàng</label>
+                        <textarea name="address" class="form-control form-control-lg" rows="3" required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100 py-3 fw-bold fs-5 rounded-pill shadow">ĐẶT HÀNG NGAY <i class="fa-solid fa-arrow-right ms-2"></i></button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-5" data-aos="fade-left">
+            <div class="p-4 rounded shadow-sm" style="background-color: #f8f9fa; border: 2px dashed #ddd;">
+                <h4 class="mb-4 fw-bold"><i class="fa-solid fa-cart-shopping me-2"></i> Tóm tắt đơn hàng</h4>
+                <ul class="list-group mb-3 list-group-flush bg-transparent">
+                    @foreach (var item in Model)
+                    {
+                        <li class="list-group-item d-flex justify-content-between lh-sm bg-transparent border-bottom">
+                            <div>
+                                <h6 class="my-0">@item.ProductName</h6>
+                                <small class="text-muted">Số lượng: @item.Quantity</small>
+                            </div>
+                            <span class="text-muted">@((item.Price * item.Quantity).ToString("N0")) đ</span>
+                        </li>
+                    }
+                    <li class="list-group-item d-flex justify-content-between bg-transparent fw-bold fs-5 pt-3 border-0">
+                        <span>Tổng cộng (VNĐ)</span>
+                        <strong>@Model.Sum(x => x.Price * x.Quantity).ToString("N0") <small>đ</small></strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,37 @@
+@model IEnumerable<webclothes.Models.Category>
+
+<div class="dropdown">
+    <a class="nav-link px-3 dropdown-toggle" href="#" id="navbarDropdownCategories" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        DANH MỤC SẢN PHẨM
+    </a>
+    <ul class="dropdown-menu border-0 shadow" aria-labelledby="navbarDropdownCategories" style="border-radius: 12px; min-width: 200px; animation: fadeInDown 0.3s ease;">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var category in Model)
+            {
+                <li>
+                    <a class="dropdown-item py-2 fw-semibold" asp-controller="Products" asp-action="Index" asp-route-categoryId="@category.Id">
+                        <i class="fa-solid fa-angle-right me-2 text-muted" style="font-size: 0.8rem;"></i> @category.Name
+                    </a>
+                </li>
+                if (category.SubCategories != null && category.SubCategories.Any())
+                {
+                    foreach (var sub in category.SubCategories)
+                    {
+                        <li>
+                            <a class="dropdown-item py-1" style="padding-left: 2.5rem; font-size: 0.95rem; color: #555;" asp-controller="Products" asp-action="Index" asp-route-categoryId="@sub.Id">
+                                - @sub.Name
+                            </a>
+                        </li>
+                    }
+                }
+            }
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item py-2 fw-bold text-center text-dark" asp-controller="Products" asp-action="Index">XEM TẤT CẢ SẢN PHẨM</a></li>
+        }
+        else
+        {
+            <li><span class="dropdown-item text-muted py-2">Đang tải danh mục...</span></li>
+        }
+    </ul>
+</div>

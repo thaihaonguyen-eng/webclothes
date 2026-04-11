@@ -1,0 +1,87 @@
+@{
+    ViewData["Title"] = "Bảng điều khiển";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2 class="mb-4">Tổng quan kinh doanh</h2>
+
+<div class="row g-4">
+    <div class="col-md-3">
+        <div class="p-4 bg-primary text-white rounded shadow-sm">
+            <h6 class="text-uppercase opacity-75">Tổng doanh thu</h6>
+            <h3 class="fw-bold">@ViewBag.TotalRevenue.ToString("N0") đ</h3>
+            <i class="fas fa-money-bill-wave float-end opacity-25" style="font-size: 2rem; margin-top: -30px;"></i>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="p-4 bg-success text-white rounded shadow-sm">
+            <h6 class="text-uppercase opacity-75">Tổng đơn hàng</h6>
+            <h3 class="fw-bold">@ViewBag.TotalOrders</h3>
+            <i class="fas fa-shopping-basket float-end opacity-25" style="font-size: 2rem; margin-top: -30px;"></i>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="p-4 bg-warning text-dark rounded shadow-sm">
+            <h6 class="text-uppercase opacity-75">Chờ xử lý</h6>
+            <h3 class="fw-bold">@ViewBag.PendingOrders</h3>
+            <i class="fas fa-clock float-end opacity-25" style="font-size: 2rem; margin-top: -30px;"></i>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="p-4 bg-info text-white rounded shadow-sm">
+            <h6 class="text-uppercase opacity-75">Sản phẩm</h6>
+            <h3 class="fw-bold">@ViewBag.TotalProducts</h3>
+            <i class="fas fa-tshirt float-end opacity-25" style="font-size: 2rem; margin-top: -30px;"></i>
+        </div>
+    </div>
+</div>
+
+<div class="mt-5 p-4 border rounded bg-white shadow-sm">
+    <h5 class="mb-4">Biểu đồ doanh thu năm @DateTime.Now.Year</h5>
+    <canvas id="revenueChart" width="400" height="150"></canvas>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var ctx = document.getElementById('revenueChart').getContext('2d');
+            var rawData = "@ViewBag.ChartData".split(',').map(Number);
+
+            var gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(37, 140, 251, 0.5)');
+            gradient.addColorStop(1, 'rgba(37, 140, 251, 0.05)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: rawData,
+                        borderColor: '#258cfb',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#258cfb',
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { callback: function(value) { return value.toLocaleString() + ' đ'; } }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

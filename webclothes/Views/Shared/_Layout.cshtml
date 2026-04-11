@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WEBCLOTHES | Premium Fashion</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; border-radius: 10px;">
+            <strong><i class="fa-solid fa-check-circle"></i> Thành công!</strong> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">WEBCLOTHES</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item"><a class="nav-link px-3" href="/">TRANG CHỦ</a></li>
+                    <li class="nav-item d-flex align-items-center">
+                        @await Component.InvokeAsync("CategoryMenu")
+                    </li>
+                    <li class="nav-item"><a class="nav-link px-3" href="/Home/Contact">LIÊN HỆ</a></li>
+                </ul>
+
+                <div class="d-flex align-items-center">
+                    <a asp-controller="Orders" asp-action="History" class="text-dark position-relative me-4" style="text-decoration: none;" title="Lịch sử đơn hàng">
+                        <i class="fa-solid fa-clock-rotate-left" style="font-size: 1.4rem;"></i>
+                    </a>
+
+                    <a href="/Cart" class="text-dark position-relative me-4" style="text-decoration: none;" title="Giỏ hàng">
+                        <i class="fa-solid fa-bag-shopping" style="font-size: 1.4rem;"></i>
+                        <span id="cart-counter" class="badge rounded-pill bg-warning text-dark position-absolute top-0 start-100 translate-middle"
+                              style="font-size: 0.65rem;">0</span>
+                    </a>
+
+                    @if (User.Identity!.IsAuthenticated)
+                    {
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle text-dark fw-bold" href="#" data-bs-toggle="dropdown">
+                                <i class="fa-solid fa-user-circle"></i> @User.Identity.Name
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 10px;">
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <li><a class="dropdown-item py-2" href="/Admin/Dashboard"><i class="fa-solid fa-gauge me-2"></i>QUẢN TRỊ</a></li>
+                                }
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post">
+                                        <button type="submit" class="dropdown-item text-danger py-2"><i class="fa-solid fa-right-from-bracket me-2"></i>ĐĂNG XUẤT</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <a href="/Identity/Account/Login" class="btn btn-outline-dark btn-sm px-3 me-2" style="border-radius: 20px; font-weight: 600;">ĐĂNG NHẬP</a>
+                        <a href="/Identity/Account/Register" class="btn btn-dark btn-sm px-3" style="border-radius: 20px; font-weight: 600;">ĐĂNG KÝ</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main role="main">@RenderBody()</main>
+
+    <!-- Chat Widget Buble -->
+    <div class="chat-widget-btn" id="chatOpenBtn">
+        <i class="fa-regular fa-comment-dots"></i>
+    </div>
+
+    <!-- Chat Box -->
+    <div class="chat-box" id="chatBox">
+        <div class="chat-header">
+            <span><i class="fa-solid fa-headset me-2"></i> CSKH WEBCLOTHES</span>
+            <button class="btn-close btn-close-white" id="chatCloseBtn" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-message other">Xin chào! Chúng tôi có thể giúp gì cho bạn?</div>
+        </div>
+        <div class="chat-input border-top">
+            <input type="text" id="chatInputMessage" placeholder="Nhập tin nhắn..." autocomplete="off">
+            <button id="chatSendBtn"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <footer class="text-center py-5" style="background-color: var(--primary-color); color: #888; margin-top: auto;">
+        <div class="container">
+            <h5 class="text-white mb-3 fw-bold" style="letter-spacing: 2px;">WEBCLOTHES PREMIUM</h5>
+            <p class="mb-0">&copy; 2026 - Tinh hoa thời trang đương đại.</p>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- Thêm SignalR CDN để Chat hoạt động -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true });
+
+        // Chat Widget Toggle
+        const chatOpenBtn = document.getElementById('chatOpenBtn');
+        const chatBox = document.getElementById('chatBox');
+        const chatCloseBtn = document.getElementById('chatCloseBtn');
+
+        chatOpenBtn.addEventListener('click', () => {
+            chatBox.classList.add('active');
+            chatOpenBtn.style.transform = 'scale(0)';
+        });
+
+        chatCloseBtn.addEventListener('click', () => {
+            chatBox.classList.remove('active');
+            chatOpenBtn.style.transform = 'scale(1)';
+        });
+
+        // Khởi tạo SignalR kết nối Chat Hub (Sẽ viết hub sau)
+        const chatConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .build();
+
+        chatConnection.on("ReceiveMessage", (user, message) => {
+            const msgDiv = document.createElement("div");
+            // Nếu người gửi là Admin (CSKH), hiện bên trái, nếu không hiện bên phải
+            const isSelf = user.toLowerCase() !== "admin"; 
+            msgDiv.className = `chat-message ${isSelf ? 'self' : 'other'}`;
+            msgDiv.textContent = message;
+            document.getElementById("chatMessages").appendChild(msgDiv);
+            document.getElementById("chatMessages").scrollTop = document.getElementById("chatMessages").scrollHeight;
+        });
+
+        chatConnection.start().catch(err => console.error(err.toString()));
+
+        document.getElementById("chatSendBtn").addEventListener("click", () => {
+            sendMessage();
+        });
+
+        document.getElementById("chatInputMessage").addEventListener("keypress", (e) => {
+            if(e.key === 'Enter') sendMessage();
+        });
+
+        function sendMessage() {
+            const msg = document.getElementById("chatInputMessage").value;
+            if(!msg) return;
+            
+            // Lấy tên người dùng hiện tại (nếu login), hoặc Guest
+            const userName = "@(User.Identity!.IsAuthenticated ? User.Identity.Name : "Guest_" + Guid.NewGuid().ToString().Substring(0,5))";
+
+            chatConnection.invoke("SendMessage", userName, msg).catch(err => console.error(err.toString()));
+            document.getElementById("chatInputMessage").value = "";
+        }
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

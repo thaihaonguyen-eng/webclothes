@@ -1,0 +1,83 @@
+@{
+    ViewData["Title"] = "Liên hệ";
+}
+
+<div class="container my-5" style="min-height: 60vh" data-aos="fade-up">
+    <div class="row text-center mb-5">
+        <h2 class="fw-bold text-uppercase" style="letter-spacing: 2px;">Liên Hệ Với Chúng Tôi</h2>
+        <p class="text-muted">Chúng tôi luôn sẵn sàng hỗ trợ bạn. Vui lòng để lại lời nhắn để được phục vụ tốt nhất.</p>
+    </div>
+
+    <div class="row g-5">
+        <!-- Contact Info -->
+        <div class="col-lg-4 text-center text-lg-start">
+            <h4 class="fw-bold mb-4">Thông Tin Cửa Hàng</h4>
+            
+            <div class="d-flex align-items-center mb-4 justify-content-center justify-content-lg-start">
+                <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+                <div class="ms-3 text-start">
+                    <h6 class="fw-bold mb-1">Địa chỉ</h6>
+                    <p class="text-muted mb-0">123 Đường Thời Trang, Quận 1, TP. HCM</p>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center mb-4 justify-content-center justify-content-lg-start">
+                <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa-solid fa-phone"></i>
+                </div>
+                <div class="ms-3 text-start">
+                    <h6 class="fw-bold mb-1">Điện thoại</h6>
+                    <p class="text-muted mb-0">(+84) 123 456 789</p>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center mb-4 justify-content-center justify-content-lg-start">
+                <div class="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa-solid fa-envelope"></i>
+                </div>
+                <div class="ms-3 text-start">
+                    <h6 class="fw-bold mb-1">Thư điện tử</h6>
+                    <p class="text-muted mb-0">support@webclothes.com</p>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            <h6 class="fw-bold mb-3">Kết nối với chúng tôi</h6>
+            <div class="d-flex gap-3 justify-content-center justify-content-lg-start">
+                <a href="#" class="btn btn-outline-dark rounded-circle px-2 py-1"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="#" class="btn btn-outline-dark rounded-circle px-2 py-1"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" class="btn btn-outline-dark rounded-circle px-2 py-1"><i class="fa-brands fa-twitter"></i></a>
+            </div>
+        </div>
+
+        <!-- Contact Form -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
+                <h4 class="fw-bold mb-4">Gửi tin nhắn</h4>
+                <form>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Họ và tên</label>
+                            <input type="text" class="form-control" placeholder="Nhập tên của bạn">
+                        </div>
+                        <div class="col-md-6 mt-3 mt-md-0">
+                            <label class="form-label text-muted">Email</label>
+                            <input type="email" class="form-control" placeholder="Nhập email của bạn">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Chủ đề</label>
+                        <input type="text" class="form-control" placeholder="Bạn cần hỗ trợ về...?">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-muted">Nội dung thay nhắn</label>
+                        <textarea class="form-control" rows="5" placeholder="Chi tiết..."></textarea>
+                    </div>
+                    <button type="button" class="btn btn-dark w-100 py-3 fw-bold" onclick="alert('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất.')">GỬI YÊU CẦU</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

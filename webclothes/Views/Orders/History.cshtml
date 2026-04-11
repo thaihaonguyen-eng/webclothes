@@ -1,0 +1,64 @@
+@model IEnumerable<webclothes.Models.Order>
+@{
+    ViewData["Title"] = "Lịch sử đơn hàng";
+}
+
+<div class="container py-5" style="min-height: 70vh;" data-aos="fade-up">
+    <h2 class="mb-5 text-center fw-bold text-uppercase" style="letter-spacing: 1px;">Lịch sử đơn hàng</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fa-solid fa-box-open text-muted mb-4" style="font-size: 4rem;"></i>
+            <h4 class="text-muted">Bạn chưa có đơn hàng nào!</h4>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-dark rounded-pill mt-3 px-4">Mua sắm ngay</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-hover align-middle mb-0 text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Mã ĐH</th>
+                        <th>Ngày đặt</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Chi tiết</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold">#@order.Id</td>
+                            <td>@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-danger fw-bold">@order.TotalAmount.ToString("N0") đ</td>
+                            <td>
+                                @if (order.Status == "Chờ xử lý")
+                                {
+                                    <span class="badge bg-warning text-dark">@order.Status</span>
+                                }
+                                else if (order.Status == "Đang giao")
+                                {
+                                    <span class="badge bg-info">@order.Status</span>
+                                }
+                                else if (order.Status == "Hoàn thành")
+                                {
+                                    <span class="badge bg-success">@order.Status</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@order.Status</span>
+                                }
+                            </td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-dark rounded-pill px-3">Xem chi tiết</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

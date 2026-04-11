@@ -1,0 +1,38 @@
+﻿@model IEnumerable<webclothes.Models.Order>
+
+@{
+    ViewData["Title"] = "Quản lý đơn hàng";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml"; // Áp dụng giao diện Admin
+}
+
+<h2 class="mb-4">Danh sách Đơn hàng</h2>
+
+<table class="table table-hover table-bordered text-center align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>Mã ĐH</th>
+            <th>Khách hàng</th>
+            <th>Số điện thoại</th>
+            <th>Ngày đặt</th>
+            <th>Tổng tiền</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td><strong>#@item.Id</strong></td>
+                <td>@item.CustomerName</td>
+                <td>@item.Phone</td>
+                <td>@item.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                <td class="text-danger fw-bold">@item.TotalAmount.ToString("N0") đ</td>
+                <td><span class="badge bg-warning text-dark">@item.Status</span></td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info text-white"><i class="fas fa-eye"></i> Xem</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

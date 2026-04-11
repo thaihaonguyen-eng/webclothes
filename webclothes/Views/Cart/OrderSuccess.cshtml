@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Đặt hàng thành công";
+    var orderTotal = Context.Session.GetString("OrderTotal");
+    var orderId = Context.Session.GetString("OrderId");
+}
+
+<div class="container py-5 text-center" style="min-height: 70vh;" data-aos="fade-up">
+    <div class="card border-0 shadow-lg mx-auto" style="max-width: 600px; border-radius: 20px;">
+        <div class="card-body p-5">
+            <i class="fa-solid fa-circle-check text-success mb-3" style="font-size: 5rem;"></i>
+            <h2 class="fw-bold mb-3">ĐẶT HÀNG THÀNH CÔNG!</h2>
+            <p class="text-muted mb-4">Mã đơn hàng của bạn là: <strong>#@orderId</strong><br />Chúng tôi đã gửi email xác nhận đặt hàng cho bạn.</p>
+
+            @if (!string.IsNullOrEmpty(orderTotal))
+            {
+                <div class="p-4 rounded-3 mb-4" style="background-color: #f8f9fa; border: 1px solid #ddd;">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-qrcode me-2"></i> THANH TOÁN CHUYỂN KHOẢN</h5>
+                    <p class="mb-3">Vui lòng quét mã QR dưới đây để thanh toán số tiền <strong class="text-danger">@decimal.Parse(orderTotal).ToString("N0") VNĐ</strong></p>
+                    
+                    <!-- FAKE QR CODE FOR MB BANK -->
+                    <img src="https://img.vietqr.io/image/mb-123456789-compact2.png?amount=@orderTotal&addInfo=WEBCLOTHES%20ORDER%20@orderId&accountName=FAKE%20STORE" 
+                         alt="QR Thanh Toán" class="img-fluid rounded shadow-sm" style="max-width: 250px;" />
+                    
+                    <p class="mt-3 text-muted" style="font-size: 0.85rem;">Hoàn tất thanh toán để chúng tôi đóng gói và giao hàng nhé!</p>
+                </div>
+            }
+
+            <a asp-controller="Home" asp-action="Index" class="btn btn-dark py-2 px-5 rounded-pill fw-bold" style="letter-spacing: 1px;">TIẾP TỤC MUA SẮM</a>
+        </div>
+    </div>
+</div>
