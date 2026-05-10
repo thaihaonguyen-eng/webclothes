@@ -1,0 +1,185 @@
+﻿@model webclothes.Models.Order
+@{
+    ViewData["Title"] = "Đơn hàng #" + Model.Id;
+    Layout = "~/Areas/Shipper/Views/Shared/_ShipperLayout.cshtml";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0" style="color: #064e3b;">
+        <i class="fas fa-file-invoice me-2"></i>Đơn hàng #@Model.Id
+    </h4>
+    <a asp-action="Index" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Quay lại</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #064e3b, #0d7377);">
+                <i class="fas fa-map-marker-alt me-2"></i>Thông tin Giao hàng
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="text-uppercase small text-muted">Người nhận</div>
+                    <strong>@Model.CustomerName</strong>
+                </div>
+                <div class="mb-3">
+                    <div class="text-uppercase small text-muted">Số điện thoại</div>
+                    <strong><a href="tel:@Model.Phone" style="color: #0d7377; text-decoration: none;"><i class="fas fa-phone me-1"></i>@Model.Phone</a></strong>
+                </div>
+                <div class="mb-3">
+                    <div class="text-uppercase small text-muted">Địa chỉ giao</div>
+                    <div class="p-2 rounded" style="background: #f0fdf4; border: 1px solid #d1fae5;">
+                        <i class="fas fa-map-pin me-1 text-danger"></i>@Model.Address
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="text-uppercase small text-muted">Ngày đặt</div>
+                    <strong>@Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</strong>
+                </div>
+                <div class="mb-3">
+                    <div class="text-uppercase small text-muted">Thu hộ (COD)</div>
+                    <h5 class="fw-bold mb-0 text-danger">@Model.TotalAmount.ToString("N0") đ</h5>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.ShipperNote))
+                {
+                    <div class="mb-3">
+                        <div class="text-uppercase small text-muted">Ghi chú shipper</div>
+                        <div class="p-2 rounded bg-light">@Model.ShipperNote</div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.ShipperProofImageUrl))
+                {
+                    <div class="mb-3">
+                        <div class="text-uppercase small text-muted">Ảnh bằng chứng</div>
+                        <a href="@Model.ShipperProofImageUrl" target="_blank">
+                            <img src="@Model.ShipperProofImageUrl" alt="Proof" class="img-fluid rounded border" />
+                        </a>
+                    </div>
+                }
+
+                <hr />
+
+                <div class="mb-2 fw-bold" style="color: #064e3b;">Cập nhật trạng thái Giao hàng:</div>
+                @if (Model.Status == "Hoàn thành" || Model.Status == "Thất bại")
+                {
+                    <div class="p-3 rounded text-center" style="background: @(Model.Status == "Hoàn thành" ? "#d1fae5" : "#fee2e2");">
+                        <i class="fas @(Model.Status == "Hoàn thành" ? "fa-check-circle text-success" : "fa-times-circle text-danger") me-1" style="font-size: 1.3rem;"></i>
+                        <strong>@Model.Status</strong>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @if (Model.Status == "Chờ lấy hàng")
+                        {
+                            <form asp-action="UpdateStatus" method="post" enctype="multipart/form-data">
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <input type="hidden" name="status" value="Đang giao hàng" />
+                                <div class="mb-2">
+                                    <input type="file" name="proofImage" class="form-control form-control-sm" accept="image/*,.avif,.webp" />
+                                </div>
+                                <button type="submit" class="btn w-100 text-white" style="background: linear-gradient(135deg, #0ea5e9, #38bdf8); border: none;">
+                                    <i class="fas fa-truck me-1"></i> Bắt đầu Giao hàng
+                                </button>
+                            </form>
+                        }
+
+                        @if (Model.Status == "Đang giao hàng")
+                        {
+                            <form asp-action="UpdateStatus" method="post" enctype="multipart/form-data">
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <input type="hidden" name="status" value="Hoàn thành" />
+                                <div class="mb-2">
+                                    <input type="file" name="proofImage" class="form-control form-control-sm" accept="image/*,.avif,.webp" />
+                                </div>
+                                <div class="mb-2">
+                                    <textarea name="shipperNote" class="form-control form-control-sm" rows="2" placeholder="Ghi chú Giao hàng Thành công (không bắt buộc)"></textarea>
+                                </div>
+                                <button type="submit" class="btn w-100 text-white" style="background: linear-gradient(135deg, #10b981, #34d399); border: none;">
+                                    <i class="fas fa-check-circle me-1"></i> Giao Thành công
+                                </button>
+                            </form>
+
+                            <form asp-action="UpdateStatus" method="post" enctype="multipart/form-data" onsubmit="return confirm('Xác nhận Đơn hàng giao Thất bại?');">
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <input type="hidden" name="status" value="Thất bại" />
+                                <div class="mb-2">
+                                    <textarea name="shipperNote" class="form-control form-control-sm" rows="2" placeholder="Lý do Thất bại"></textarea>
+                                </div>
+                                <div class="mb-2">
+                                    <input type="file" name="proofImage" class="form-control form-control-sm" accept="image/*,.avif,.webp" />
+                                </div>
+                                <button type="submit" class="btn btn-outline-danger w-100">
+                                    <i class="fas fa-times-circle me-1"></i> Giao Thất bại
+                                </button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #064e3b, #0d7377);">
+                <i class="fas fa-box me-2"></i>Sản phẩm trong đơn
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0 text-center align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-start ps-3">Sản phẩm</th>
+                            <th>Đơn giá</th>
+                            <th>SL</th>
+                            <th>Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OrderDetails ?? new List<webclothes.Models.OrderDetail>())
+                        {
+                            <tr>
+                                <td class="text-start ps-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (item.Product?.MainImageUrl != null)
+                                        {
+                                            <img src="@item.Product.MainImageUrl" style="width: 36px; height: 36px; object-fit: cover; border-radius: 6px;" />
+                                        }
+                                        <span>@item.Product?.Name</span>
+                                    </div>
+                                </td>
+                                <td>@item.Price.ToString("N0") đ</td>
+                                <td>x @item.Quantity</td>
+                                <td class="fw-bold">@((item.Price * item.Quantity).ToString("N0")) đ</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td colspan="3" class="text-end">TỔNG THU HỘ:</td>
+                            <td class="text-danger fs-5">@Model.TotalAmount.ToString("N0") đ</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

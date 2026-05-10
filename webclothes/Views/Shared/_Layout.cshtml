@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WEBCLOTHES | Premium Fashion</title>
+    <title>@ViewData["Title"] - WEBCLOTHES | Premium Fashion</title>
+    @await RenderSectionAsync("MetaTags", required: false)
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
@@ -34,6 +35,13 @@
                 </ul>
 
                 <div class="d-flex align-items-center">
+                    <button type="button" id="themeToggleBtn" class="btn btn-sm btn-outline-dark rounded-circle me-3" title="Chế độ tối" style="width: 40px; height: 40px;">
+                        <i class="fa-regular fa-moon"></i>
+                    </button>
+                    <a asp-controller="Wishlist" asp-action="Index" class="text-dark position-relative me-4" style="text-decoration: none;" title="Yêu thích">
+                        <i class="fa-regular fa-heart" style="font-size: 1.4rem;"></i>
+                    </a>
+
                     <a asp-controller="Orders" asp-action="History" class="text-dark position-relative me-4" style="text-decoration: none;" title="Lịch sử đơn hàng">
                         <i class="fa-solid fa-clock-rotate-left" style="font-size: 1.4rem;"></i>
                     </a>
@@ -55,6 +63,17 @@
                                 {
                                     <li><a class="dropdown-item py-2" href="/Admin/Dashboard"><i class="fa-solid fa-gauge me-2"></i>QUẢN TRỊ</a></li>
                                 }
+                                @if (User.IsInRole("Seller"))
+                                {
+                                    <li><a class="dropdown-item py-2" href="/Seller/Dashboard"><i class="fa-solid fa-store me-2"></i>SELLER CENTER</a></li>
+                                }
+                                @if (User.IsInRole("Shipper"))
+                                {
+                                    <li><a class="dropdown-item py-2" href="/Shipper/Dashboard"><i class="fa-solid fa-truck me-2"></i>SHIPPER HUB</a></li>
+                                }
+                                <li><a class="dropdown-item py-2" href="/Wishlist"><i class="fa-regular fa-heart me-2"></i>YÊU THÍCH</a></li>
+                                <li><a class="dropdown-item py-2" href="/Profile"><i class="fa-regular fa-user me-2"></i>HỒ SƠ</a></li>
+                                <li><a class="dropdown-item py-2" href="/Notifications"><i class="fa-regular fa-bell me-2"></i>Thông báo</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post">
@@ -115,6 +134,25 @@
         const chatOpenBtn = document.getElementById('chatOpenBtn');
         const chatBox = document.getElementById('chatBox');
         const chatCloseBtn = document.getElementById('chatCloseBtn');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+        const applyTheme = (theme) => {
+            document.body.classList.toggle('dark-theme', theme === 'dark');
+            if (themeToggleBtn) {
+                themeToggleBtn.innerHTML = theme === 'dark'
+                    ? '<i class="fa-regular fa-sun"></i>'
+                    : '<i class="fa-regular fa-moon"></i>';
+            }
+        };
+
+        const savedTheme = localStorage.getItem('webclothes-theme') || 'light';
+        applyTheme(savedTheme);
+
+        themeToggleBtn?.addEventListener('click', () => {
+            const nextTheme = document.body.classList.contains('dark-theme') ? 'light' : 'dark';
+            localStorage.setItem('webclothes-theme', nextTheme);
+            applyTheme(nextTheme);
+        });
 
         chatOpenBtn.addEventListener('click', () => {
             chatBox.classList.add('active');
@@ -126,14 +164,13 @@
             chatOpenBtn.style.transform = 'scale(1)';
         });
 
-        // Khởi tạo SignalR kết nối Chat Hub (Sẽ viết hub sau)
+        // Khởi tạo SignalR kết nối Chat Hub
         const chatConnection = new signalR.HubConnectionBuilder()
             .withUrl("/chatHub")
             .build();
 
         chatConnection.on("ReceiveMessage", (user, message) => {
             const msgDiv = document.createElement("div");
-            // Nếu người gửi là Admin (CSKH), hiện bên trái, nếu không hiện bên phải
             const isSelf = user.toLowerCase() !== "admin"; 
             msgDiv.className = `chat-message ${isSelf ? 'self' : 'other'}`;
             msgDiv.textContent = message;
@@ -155,8 +192,7 @@
             const msg = document.getElementById("chatInputMessage").value;
             if(!msg) return;
             
-            // Lấy tên người dùng hiện tại (nếu login), hoặc Guest
-            const userName = "@(User.Identity!.IsAuthenticated ? User.Identity.Name : "Guest_" + Guid.NewGuid().ToString().Substring(0,5))";
+            const userName = "@(User.Identity!.IsAuthenticated ? User.Identity.Name : "Khách_" + Guid.NewGuid().ToString().Substring(0,5))";
 
             chatConnection.invoke("SendMessage", userName, msg).catch(err => console.error(err.toString()));
             document.getElementById("chatInputMessage").value = "";

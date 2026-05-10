@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using webclothes.Data;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
@@ -39,6 +39,13 @@ namespace webclothes.Areas.Admin.Controllers
             }
 
             ViewBag.ChartData = string.Join(",", monthlyRevenue);
+
+            // Hoạt động gần đây (Hoạt động của mọi tài khoản)
+            ViewBag.RecentActivities = _context.OrderStatusHistories
+                .OrderByDescending(h => h.ChangedAt)
+                .Take(10)
+                .ToList();
+
             return View();
         }
     }

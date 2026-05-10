@@ -1,0 +1,110 @@
+@model IEnumerable<webclothes.Models.Order>
+@{
+    ViewData["Title"] = "Đơn hàng";
+    Layout = "~/Areas/Seller/Views/Shared/_SellerLayout.cshtml";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0" style="color: #1e3a5f;">
+        <i class="fas fa-receipt me-2"></i>Quản lý đơn hàng
+    </h4>
+</div>
+
+<div class="card mb-4 shadow-sm border-0" style="border-radius: 10px;">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label text-muted small fw-bold">Tìm kiếm</label>
+                <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Mã ĐH, SĐT, Tên..." />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-muted small fw-bold">Trạng thái</label>
+                <select name="status" class="form-select">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="Chờ xử lý" selected="@(ViewData["CurrentStatus"]?.ToString() == "Chờ xử lý")">Chờ xử lý</option>
+                    <option value="Chờ lấy hàng" selected="@(ViewData["CurrentStatus"]?.ToString() == "Chờ lấy hàng")">Chờ lấy hàng</option>
+                    <option value="Đang giao hàng" selected="@(ViewData["CurrentStatus"]?.ToString() == "Đang giao hàng")">Đang giao hàng</option>
+                    <option value="Hoàn thành" selected="@(ViewData["CurrentStatus"]?.ToString() == "Hoàn thành")">Hoàn thành</option>
+                    <option value="Thất bại" selected="@(ViewData["CurrentStatus"]?.ToString() == "Thất bại")">Thất bại</option>
+                    <option value="Đã hủy" selected="@(ViewData["CurrentStatus"]?.ToString() == "Đã hủy")">Đã hủy</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-muted small fw-bold">Từ ngày</label>
+                <input type="date" name="fromDate" value="@ViewData["FromDate"]" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-muted small fw-bold">Đến ngày</label>
+                <input type="date" name="toDate" value="@ViewData["ToDate"]" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <input type="hidden" name="sortOrder" value="@ViewData["CurrentSort"]" />
+                <button type="submit" class="btn text-white w-100" style="background: linear-gradient(135deg, #1e3a5f, #4a90d9); border: none;"><i class="fas fa-filter me-2"></i>Lọc</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle text-center">
+        <thead>
+            <tr style="background: #1e3a5f; color: white;">
+                <th style="border-radius: 8px 0 0 0;">Mã ĐH</th>
+                <th>Khách hàng</th>
+                <th>SĐT</th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["DateSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]" asp-route-status="@ViewData["CurrentStatus"]" asp-route-fromDate="@ViewData["FromDate"]" asp-route-toDate="@ViewData["ToDate"]" class="text-white text-decoration-none">
+                        Ngày đặt
+                        @if (ViewData["CurrentSort"]?.ToString() == "date_asc") { <i class="fas fa-sort-up ms-1"></i> } else if (string.IsNullOrEmpty(ViewData["CurrentSort"]?.ToString())) { <i class="fas fa-sort-down ms-1"></i> } else { <i class="fas fa-sort text-white-50 ms-1"></i> }
+                    </a>
+                </th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["TotalSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]" asp-route-status="@ViewData["CurrentStatus"]" asp-route-fromDate="@ViewData["FromDate"]" asp-route-toDate="@ViewData["ToDate"]" class="text-white text-decoration-none">
+                        Tổng tiền
+                        @if (ViewData["CurrentSort"]?.ToString() == "total_asc") { <i class="fas fa-sort-up ms-1"></i> } else if (ViewData["CurrentSort"]?.ToString() == "total_desc") { <i class="fas fa-sort-down ms-1"></i> } else { <i class="fas fa-sort text-white-50 ms-1"></i> }
+                    </a>
+                </th>
+                <th>Trạng thái</th>
+                <th style="border-radius: 0 8px 0 0;">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                var badgeColor = item.Status switch
+                {
+                    "Chờ xử lý" => "#f59e0b",
+                    "Chờ lấy hàng" => "#0ea5e9",
+                    "Đang giao hàng" => "#8b5cf6",
+                    "Hoàn thành" => "#10b981",
+                    "Thất bại" => "#ef4444",
+                    "Đã hủy" => "#6b7280",
+                    _ => "#6b7280"
+                };
+                <tr>
+                    <td><strong>#@item.Id</strong></td>
+                    <td>@item.CustomerName</td>
+                    <td>@item.Phone</td>
+                    <td>@item.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td class="fw-bold" style="color: #dc2626;">@item.TotalAmount.ToString("N0") đ</td>
+                    <td>
+                        <span class="badge rounded-pill text-white" style="background: @badgeColor;">@item.Status</span>
+                    </td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> Xem
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

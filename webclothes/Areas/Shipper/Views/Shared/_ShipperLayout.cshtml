@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Shipper Hub</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: #f0f7f4;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
+
+        .sidebar {
+            height: 100vh;
+            background: linear-gradient(180deg, #064e3b 0%, #0d7377 40%, #11998e 100%);
+            color: white;
+            position: fixed;
+            width: 260px;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar .brand {
+            padding: 24px 20px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            background: rgba(0,0,0,0.2);
+            text-align: center;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .sidebar .brand i { 
+            color: #6ee7b7;
+            margin-right: 8px;
+            font-size: 1.3rem;
+        }
+
+        .sidebar .nav-section {
+            padding: 16px 0 8px 20px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(255,255,255,0.35);
+            font-weight: 600;
+        }
+
+        .sidebar a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            padding: 13px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.25s ease;
+            border-left: 3px solid transparent;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .sidebar a:hover {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border-left-color: #6ee7b7;
+        }
+        .sidebar a i {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .sidebar .nav-bottom {
+            margin-top: auto;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 8px;
+        }
+        .sidebar .nav-bottom a {
+            color: rgba(255,255,255,0.5);
+        }
+        .sidebar .nav-bottom a:hover {
+            color: #fbbf24;
+            border-left-color: #fbbf24;
+        }
+
+        .content {
+            margin-left: 260px;
+            padding: 28px;
+            min-height: 100vh;
+        }
+
+        .content-card {
+            background: #fff;
+            padding: 28px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 6px 16px rgba(0,0,0,0.04);
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #d1fae5;
+        }
+        .top-bar .greeting {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+        .top-bar .greeting strong {
+            color: #064e3b;
+        }
+        .top-bar .role-badge {
+            background: linear-gradient(135deg, #0d7377, #2ecc71);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand">
+            <i class="fas fa-truck-fast"></i> SHIPPER HUB
+        </div>
+
+        <div class="nav-section">Tổng quan</div>
+        <a href="/Shipper/Dashboard"><i class="fas fa-gauge-high"></i> Dashboard</a>
+
+        <div class="nav-section">Giao hàng</div>
+        <a href="/Shipper/Orders"><i class="fas fa-boxes-stacked"></i> Đơn cần giao</a>
+
+        <a href="/Notifications"><i class="fas fa-bell"></i> Thông báo</a>
+
+        <div class="nav-bottom">
+            <a href="/"><i class="fas fa-arrow-left"></i> Về trang chủ</a>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="top-bar">
+            <div class="greeting">
+                Xin chào, <strong>@User.Identity?.Name</strong>
+            </div>
+            <span class="role-badge"><i class="fas fa-motorcycle me-1"></i> SHIPPER</span>
+        </div>
+        <div class="content-card">
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

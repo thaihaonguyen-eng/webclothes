@@ -1,0 +1,149 @@
+﻿@model webclothes.Models.Product
+@{
+    ViewData["Title"] = "Sửa sản phẩm";
+    Layout = "~/Areas/Seller/Views/Shared/_SellerLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #4a90d9, #1e3a5f);">
+                <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Cập nhật sản phẩm</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="ImageName" />
+                    <input type="hidden" asp-for="MainImageUrl" />
+                    <input type="hidden" asp-for="CreatedDate" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên sản phẩm <span class="text-danger">*</span></label>
+                        <input asp-for="Name" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mô tả sản phẩm <span class="text-danger">*</span></label>
+                        <textarea asp-for="Description" class="form-control" rows="4" required></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Danh mục <span class="text-danger">*</span></label>
+                            <select asp-for="CategoryId" class="form-select" asp-items="@ViewBag.Categories" required>
+                                <option value="">-- Chọn --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Giá bán (VNĐ) <span class="text-danger">*</span></label>
+                            <input asp-for="Price" type="number" class="form-control" required />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Tồn kho <span class="text-danger">*</span></label>
+                            <input asp-for="StockQuantity" type="number" class="form-control" required min="0" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kích cỡ (Size)</label>
+                        <input asp-for="Size" class="form-control" placeholder="VD: S, M, L, XL, XXL" />
+                        <small class="text-muted">Nhập các size cách nhau bằng dấu phẩy</small>
+                    </div>
+
+                    <div class="card mb-3 border-danger border-opacity-25">
+                        <div class="card-header bg-danger bg-opacity-10 fw-bold text-danger" style="font-size: 0.9rem;">
+                            <i class="fas fa-fire me-1"></i> Flash Sale (Tùy chọn)
+                        </div>
+                        <div class="card-body py-2">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label fw-semibold small">Giá Sale</label>
+                                    <input asp-for="SalePrice" type="number" class="form-control form-control-sm" placeholder="Để trống = không sale" min="0" />
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label fw-semibold small">Kết thúc Sale</label>
+                                    <input asp-for="SaleEndDate" type="datetime-local" class="form-control form-control-sm" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Ảnh đại diện (chọn ảnh mới nếu muốn thay đổi)</label>
+                        <input type="file" name="imageFile" class="form-control mb-2" accept="image/*,.avif,.webp" />
+                        @if (!string.IsNullOrEmpty(Model.MainImageUrl))
+                        {
+                            <div class="mb-3">
+                                <img src="@Model.MainImageUrl" alt="" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb;" />
+                                <small class="text-muted ms-2">Ảnh hiện tại</small>
+                            </div>
+                        }
+
+                        <hr />
+                        
+                        <label class="form-label fw-semibold">Thư viện ảnh phụ (Gallery)</label>
+                        <input type="file" name="galleryFiles" class="form-control mb-3" accept="image/*,.avif,.webp" multiple />
+                        
+                        @if (Model.Images != null && Model.Images.Any())
+                        {
+                            <div class="row g-2" id="gallery-container">
+                                @foreach (var img in Model.Images)
+                                {
+                                    <div class="col-3 position-relative" id="gallery-img-@img.Id">
+                                        <img src="@img.ImageUrl" class="img-thumbnail" style="width: 100%; height: 100px; object-fit: cover;" />
+                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 btn-delete-gallery" data-id="@img.Id" style="padding: 0.1rem 0.3rem;">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn text-white px-4" style="background: linear-gradient(135deg, #1e3a5f, #4a90d9); border: none;">
+                            <i class="fas fa-save me-1"></i> Cập nhật
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.querySelectorAll('.btn-delete-gallery').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const imgId = this.getAttribute('data-id');
+                Swal.fire({
+                    title: 'Xóa ảnh này?',
+                    text: "Hành động này không thể hoàn tác!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Có, xóa đi!',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch('@Url.Action("DeleteGalleryImage", "Products", new { area = "Seller" })/' + imgId, {
+                            method: 'POST'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if(data.success) {
+                                document.getElementById('gallery-img-' + imgId).remove();
+                                Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
+                            } else {
+                                Swal.fire('Lỗi', data.message, 'error');
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

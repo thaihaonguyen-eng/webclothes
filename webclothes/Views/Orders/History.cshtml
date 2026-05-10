@@ -1,4 +1,4 @@
-@model IEnumerable<webclothes.Models.Order>
+﻿@model IEnumerable<webclothes.Models.Order>
 @{
     ViewData["Title"] = "Lịch sử đơn hàng";
 }
@@ -39,11 +39,11 @@
                                 {
                                     <span class="badge bg-warning text-dark">@order.Status</span>
                                 }
-                                else if (order.Status == "Đang giao")
+                                else if (order.Status == "Đang giao hàng" || order.Status == "Chờ lấy hàng")
                                 {
                                     <span class="badge bg-info">@order.Status</span>
                                 }
-                                else if (order.Status == "Hoàn thành")
+                                else if (order.Status == "Hoàn thành" || order.Status == "Đã thanh toán (VNPay)")
                                 {
                                     <span class="badge bg-success">@order.Status</span>
                                 }

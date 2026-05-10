@@ -1,80 +1,201 @@
-@model webclothes.Models.Order
+﻿@model webclothes.Models.Order
 @{
-    ViewData["Title"] = "Chi tiết đơn hàng";
+    ViewData["Title"] = "Đơn hàng #" + Model.Id;
+    var statusHistory = ViewBag.StatusHistory as List<webclothes.Models.OrderStatusHistory> ?? new List<webclothes.Models.OrderStatusHistory>();
+    
+    var allStatuses = new[] { "Chờ xử lý", "Chờ lấy hàng", "Đang giao hàng", "Hoàn thành" };
+    int currentStep = Array.IndexOf(allStatuses, Model.Status);
+    if (currentStep < 0) currentStep = Model.Status == "Đã hủy" || Model.Status == "Thất bại" ? -1 : 0;
+    var statusIcons = new[] { "fa-clipboard-check", "fa-box-open", "fa-truck", "fa-circle-check" };
 }
 
-<div class="container py-5" style="min-height: 70vh;" data-aos="fade-up">
+<div class="container py-5" style="min-height: 70vh;">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold">Chi tiết Đơn hàng #@Model.Id</h2>
-        <a asp-action="History" class="btn btn-outline-dark rounded-pill px-4"><i class="fa-solid fa-arrow-left me-2"></i> Quay lại</a>
+        <h3 class="fw-bold mb-0"><i class="fas fa-file-invoice me-2"></i>Đơn hàng #@Model.Id</h3>
+        <a asp-action="History" class="btn btn-outline-dark rounded-pill px-4"><i class="fas fa-arrow-left me-1"></i> Quay lại</a>
+    </div>
+
+    <!-- ORDER TRACKING TIMELINE -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px; overflow: hidden;">
+        <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #1a1a2e, #16213e);">
+            <i class="fas fa-route me-2"></i>Theo dõi đơn hàng
+        </div>
+        <div class="card-body py-4 px-5">
+            @if (Model.Status == "Đã hủy" || Model.Status == "Thất bại")
+            {
+                <div class="text-center py-4">
+                    <i class="fas @(Model.Status == "Đã hủy" ? "fa-ban" : "fa-times-circle") text-danger" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3 text-danger fw-bold">@Model.Status</h4>
+                    @if (!string.IsNullOrEmpty(Model.ShipperNote))
+                    {
+                        <p class="text-muted"><i class="fas fa-sticky-note me-1"></i> @Model.ShipperNote</p>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ShipperProofImageUrl))
+                    {
+                        <div class="mt-3">
+                            <a href="@Model.ShipperProofImageUrl" target="_blank" class="d-inline-block">
+                                <img src="@Model.ShipperProofImageUrl" alt="Shipper proof" class="img-fluid rounded border" style="max-width: 240px;" />
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="d-flex justify-content-between position-relative" style="padding: 0 30px;">
+                    <!-- Progress bar line -->
+                    <div class="position-absolute" style="top: 24px; left: 60px; right: 60px; height: 4px; background: #e5e7eb; border-radius: 2px; z-index: 0;">
+                        <div style="width: @(currentStep >= 0 ? Math.Round((double)currentStep / (allStatuses.Length - 1) * 100) : 0)%; height: 100%; background: linear-gradient(90deg, #10b981, #34d399); border-radius: 2px; transition: width 0.5s;"></div>
+                    </div>
+
+                    @for (int i = 0; i < allStatuses.Length; i++)
+                    {
+                        var isDone = i <= currentStep;
+                        var isCurrent = i == currentStep;
+                        <div class="text-center position-relative" style="z-index: 1; flex: 1;">
+                            <div class="mx-auto d-flex align-items-center justify-content-center rounded-circle shadow-sm"
+                                 style="width: 50px; height: 50px; background: @(isDone ? "linear-gradient(135deg, #10b981, #34d399)" : "#e5e7eb"); color: @(isDone ? "white" : "#9ca3af"); transition: all 0.3s; @(isCurrent ? "box-shadow: 0 0 0 4px rgba(16,185,129,0.3) !important;" : "")">
+                                <i class="fas @statusIcons[i]" style="font-size: 1.1rem;"></i>
+                            </div>
+                            <div class="mt-2 small @(isDone ? "fw-bold text-dark" : "text-muted")">@allStatuses[i]</div>
+                            @{
+                                var historyItem = statusHistory.FirstOrDefault(h => h.Status == allStatuses[i]);
+                            }
+                            @if (historyItem != null)
+                            {
+                                <small class="text-muted d-block" style="font-size: 0.7rem;">@historyItem.ChangedAt.ToString("dd/MM HH:mm")</small>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
     </div>
 
     <div class="row g-4">
+        <!-- Thông tin giao hàng -->
         <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-3">
-                <div class="card-body p-4 bg-light">
-                    <h5 class="fw-bold mb-3 border-bottom pb-2">Thông tin khách hàng</h5>
-                    <p class="mb-1"><strong>Tên:</strong> @Model.CustomerName</p>
-                    <p class="mb-1"><strong>SĐT:</strong> @Model.Phone</p>
-                    <p class="mb-1"><strong>Địa chỉ:</strong> @Model.Address</p>
-                    <p class="mb-1"><strong>Ngày đặt:</strong> @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+                <div class="card-header text-white" style="background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 16px 16px 0 0;">
+                    <i class="fas fa-map-marker-alt me-2"></i>Thông tin giao hàng
                 </div>
-            </div>
-            
-            <div class="card border-0 shadow-sm rounded-3 mt-4">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-3 border-bottom pb-2">Trạng thái</h5>
-                    @if (Model.Status == "Chờ xử lý")
-                    {
-                        <div class="alert alert-warning mb-0 border-0 fw-bold"><i class="fa-solid fa-clock me-2"></i> @Model.Status</div>
-                    }
-                    else if (Model.Status == "Đang giao")
-                    {
-                        <div class="alert alert-info mb-0 border-0 fw-bold"><i class="fa-solid fa-truck-fast me-2"></i> @Model.Status</div>
-                    }
-                    else 
-                    {
-                        <div class="alert alert-success mb-0 border-0 fw-bold"><i class="fa-solid fa-check me-2"></i> @Model.Status</div>
-                    }
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted text-uppercase" style="letter-spacing: 1px;">Người nhận</small>
+                        <div class="fw-bold">@Model.CustomerName</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted text-uppercase" style="letter-spacing: 1px;">Số điện thoại</small>
+                        <div class="fw-bold">@Model.Phone</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted text-uppercase" style="letter-spacing: 1px;">Địa chỉ</small>
+                        <div class="p-2 rounded" style="background: #f0fdf4; border: 1px solid #d1fae5;">
+                            <i class="fas fa-map-pin text-danger me-1"></i>@Model.Address
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted text-uppercase" style="letter-spacing: 1px;">Ngày đặt</small>
+                        <div class="fw-bold">@Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                    <div>
+                        <small class="text-muted text-uppercase" style="letter-spacing: 1px;">Trạng thái</small>
+                        @{
+                            var badgeColor = Model.Status switch {
+                                "Chờ xử lý" => "#f59e0b",
+                                "Chờ lấy hàng" => "#0ea5e9",
+                                "Đang giao hàng" => "#8b5cf6",
+                                "Hoàn thành" => "#10b981",
+                                "Thất bại" => "#ef4444",
+                                "Đã hủy" => "#6b7280",
+                                _ => "#6b7280"
+                            };
+                        }
+                        <div><span class="badge rounded-pill text-white px-3 py-2" style="background: @badgeColor;">@Model.Status</span></div>
+                    </div>
                 </div>
             </div>
         </div>
 
+        <!-- Sản phẩm -->
         <div class="col-md-8">
-            <div class="card border-0 shadow-sm rounded-3">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-4 border-bottom pb-2">Danh sách Sản phẩm</h5>
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead class="table-dark">
+            <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+                <div class="card-header text-white" style="background: linear-gradient(135deg, #1a1a2e, #16213e);">
+                    <i class="fas fa-box me-2"></i>Sản phẩm đã đặt
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0 text-center align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-start ps-3">Sản phẩm</th>
+                                <th>Đơn giá</th>
+                                <th>SL</th>
+                                <th>Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderDetails)
+                            {
                                 <tr>
-                                    <th>Sản phẩm</th>
-                                    <th>Đơn giá</th>
-                                    <th>Số lượng</th>
-                                    <th>Thành tiền</th>
+                                    <td class="text-start ps-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if (item.Product?.MainImageUrl != null)
+                                            {
+                                                <img src="@item.Product.MainImageUrl" style="width: 40px; height: 40px; object-fit: cover; border-radius: 8px;" />
+                                            }
+                                            <span>@item.Product?.Name</span>
+                                        </div>
+                                    </td>
+                                    <td>@item.Price.ToString("N0") đ</td>
+                                    <td>x @item.Quantity</td>
+                                    <td class="fw-bold">@((item.Price * item.Quantity).ToString("N0")) đ</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var detail in Model.OrderDetails)
-                                {
-                                    <tr>
-                                        <td class="fw-bold">@detail.Product.Name</td>
-                                        <td>@detail.Price.ToString("N0") đ</td>
-                                        <td>@detail.Quantity</td>
-                                        <td class="fw-bold text-danger">@((detail.Price * detail.Quantity).ToString("N0")) đ</td>
-                                    </tr>
-                                }
-                            </tbody>
-                            <tfoot class="table-light fw-bold" style="font-size: 1.1rem;">
-                                <tr>
-                                    <td colspan="3" class="text-end">Tổng cộng:</td>
-                                    <td class="text-danger">@Model.TotalAmount.ToString("N0") đ</td>
+                            }
+                        </tbody>
+                        <tfoot>
+                            @if (Model.DiscountAmount > 0)
+                            {
+                                <tr class="table-light">
+                                    <td colspan="3" class="text-end text-success">Giảm giá (@Model.VoucherCode):</td>
+                                    <td class="text-success fw-bold">-@Model.DiscountAmount.ToString("N0") đ</td>
                                 </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                            }
+                            <tr class="table-light fw-bold fs-5">
+                                <td colspan="3" class="text-end">TỔNG CỘNG:</td>
+                                <td style="color: #dc2626;">@Model.TotalAmount.ToString("N0") đ</td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
+
+            <!-- Lịch sử trạng thái chi tiết -->
+            @if (statusHistory.Any())
+            {
+                <div class="card border-0 shadow-sm mt-4" style="border-radius: 16px; overflow: hidden;">
+                    <div class="card-header" style="background: #f8f9fa;">
+                        <i class="fas fa-history me-2"></i><strong>Lịch sử cập nhật</strong>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var h in statusHistory.OrderByDescending(x => x.ChangedAt))
+                        {
+                            <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; min-width: 36px; background: #e5e7eb;">
+                                    <i class="fas fa-exchange-alt text-muted" style="font-size: 0.8rem;"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold" style="font-size: 0.9rem;">@h.Status</div>
+                                    <small class="text-muted">@h.ChangedAt.ToString("dd/MM/yyyy HH:mm") â€” @(h.ChangedBy ?? "Hệ thống")</small>
+                                    @if (!string.IsNullOrEmpty(h.Note))
+                                    {
+                                        <div class="text-muted small mt-1"><i class="fas fa-sticky-note me-1"></i>@h.Note</div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>

@@ -1,0 +1,127 @@
+@model IEnumerable<webclothes.Models.Product>
+@{
+    ViewData["Title"] = "Sản phẩm";
+    Layout = "~/Areas/Seller/Views/Shared/_SellerLayout.cshtml";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0" style="color: #1e3a5f;">
+        <i class="fas fa-box-open me-2"></i>Danh sách sản phẩm
+    </h4>
+    <a asp-action="Create" class="btn text-white px-4" style="background: linear-gradient(135deg, #1e3a5f, #4a90d9); border: none;">
+        <i class="fas fa-plus me-1"></i> Thêm sản phẩm
+    </a>
+</div>
+
+<div class="card mb-4 shadow-sm border-0" style="border-radius: 10px;">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label text-muted small fw-bold">Tìm kiếm</label>
+                <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Tên sản phẩm..." />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-muted small fw-bold">Danh mục</label>
+                <select name="categoryId" class="form-select">
+                    <option value="">-- Tất cả danh mục --</option>
+                    @if (ViewBag.CategoriesDict != null)
+                    {
+                        foreach (var cat in (Dictionary<int, string>)ViewBag.CategoriesDict)
+                        {
+                            <option value="@cat.Key" selected="@(ViewData["CurrentCategory"]?.ToString() == cat.Key.ToString())">@cat.Value</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="lowStock" value="true" id="lowStockCheck" @(Convert.ToBoolean(ViewData["LowStock"]) ? "checked" : "")>
+                    <label class="form-check-label text-danger fw-bold" for="lowStockCheck">
+                        Chỉ hiện sắp hết hàng (≤ 5)
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <input type="hidden" name="sortOrder" value="@ViewData["CurrentSort"]" />
+                <button type="submit" class="btn text-white w-100" style="background: linear-gradient(135deg, #1e3a5f, #4a90d9); border: none;"><i class="fas fa-filter me-2"></i>Lọc</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle" style="border-collapse: separate; border-spacing: 0;">
+        <thead>
+            <tr style="background: #1e3a5f; color: white;">
+                <th class="ps-3" style="border-radius: 8px 0 0 0;">ID</th>
+                <th>Ảnh</th>
+                <th>Tên sản phẩm</th>
+                <th>Danh mục</th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["PriceSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]" asp-route-categoryId="@ViewData["CurrentCategory"]" asp-route-lowStock="@ViewData["LowStock"]" class="text-white text-decoration-none">
+                        Giá bán
+                        @if (ViewData["CurrentSort"]?.ToString() == "price_asc") { <i class="fas fa-sort-up ms-1"></i> } else if (ViewData["CurrentSort"]?.ToString() == "price_desc") { <i class="fas fa-sort-down ms-1"></i> } else { <i class="fas fa-sort text-white-50 ms-1"></i> }
+                    </a>
+                </th>
+                <th>
+                    <a asp-action="Index" asp-route-sortOrder="@ViewData["StockSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]" asp-route-categoryId="@ViewData["CurrentCategory"]" asp-route-lowStock="@ViewData["LowStock"]" class="text-white text-decoration-none">
+                        Tồn kho
+                        @if (ViewData["CurrentSort"]?.ToString() == "stock_asc") { <i class="fas fa-sort-up ms-1"></i> } else if (ViewData["CurrentSort"]?.ToString() == "stock_desc") { <i class="fas fa-sort-down ms-1"></i> } else { <i class="fas fa-sort text-white-50 ms-1"></i> }
+                    </a>
+                </th>
+                <th style="border-radius: 0 8px 0 0;">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="ps-3 text-muted">#@item.Id</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.MainImageUrl))
+                        {
+                            <img src="@item.MainImageUrl" alt="" style="width: 45px; height: 45px; object-fit: cover; border-radius: 6px;" />
+                        }
+                        else
+                        {
+                            <div style="width: 45px; height: 45px; background: #e5e7eb; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-image text-muted"></i>
+                            </div>
+                        }
+                    </td>
+                    <td class="fw-semibold">@item.Name</td>
+                    <td>
+                        @{
+                            var cats = (Dictionary<int, string>)ViewBag.CategoriesDict;
+                            <span class="badge" style="background: #e0e7ff; color: #1e3a5f;">@(cats.ContainsKey(item.CategoryId) ? cats[item.CategoryId] : "-")</span>
+                        }
+                    </td>
+                    <td class="fw-bold" style="color: #dc2626;">@item.Price.ToString("N0") đ</td>
+                    <td>
+                        <span class="badge @(item.StockQuantity > 10 ? "bg-success" : item.StockQuantity > 0 ? "bg-warning text-dark" : "bg-danger")">
+                            @item.StockQuantity
+                        </span>
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary me-1">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn xóa sản phẩm này?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

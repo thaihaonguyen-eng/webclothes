@@ -1,0 +1,85 @@
+@model IEnumerable<webclothes.Models.Voucher>
+@{
+    ViewData["Title"] = "Voucher";
+    Layout = "~/Areas/Seller/Views/Shared/_SellerLayout.cshtml";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0" style="color: #1e3a5f;">
+        <i class="fas fa-ticket-alt me-2"></i>Quản lý Voucher
+    </h4>
+    <div class="d-flex gap-2">
+        <form asp-action="Index" method="get" class="d-flex">
+            <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control me-2" placeholder="Tìm kiếm..." />
+            <button type="submit" class="btn btn-outline-secondary"><i class="fas fa-search"></i></button>
+        </form>
+        <a asp-action="Create" class="btn text-white px-4" style="background: linear-gradient(135deg, #1e3a5f, #4a90d9); border: none;">
+            <i class="fas fa-plus me-1"></i> Tạo Voucher
+        </a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle text-center">
+        <thead>
+            <tr style="background: #1e3a5f; color: white;">
+                <th style="border-radius: 8px 0 0 0;">ID</th>
+                <th>Mã Voucher</th>
+                <th>Giảm giá</th>
+                <th>Số lượng</th>
+                <th>Hết hạn</th>
+                <th>Trạng thái</th>
+                <th style="border-radius: 0 8px 0 0;">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                var isExpired = item.ExpiryDate < DateTime.Now;
+                <tr class="@(isExpired ? "table-secondary" : "")">
+                    <td class="text-muted">#@item.Id</td>
+                    <td>
+                        <span class="badge fs-6" style="background: #e0e7ff; color: #1e3a5f; font-family: monospace;">@item.Code</span>
+                    </td>
+                    <td class="fw-bold" style="color: #dc2626;">-@item.DiscountAmount.ToString("N0") đ</td>
+                    <td>
+                        <span class="badge @(item.Quantity > 0 ? "bg-success" : "bg-danger")">@item.Quantity</span>
+                    </td>
+                    <td>@item.ExpiryDate.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        @if (isExpired)
+                        {
+                            <span class="badge bg-secondary">Hết hạn</span>
+                        }
+                        else if (item.Quantity <= 0)
+                        {
+                            <span class="badge bg-danger">Hết lượt</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Hoạt động</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary me-1">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn xóa voucher này?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

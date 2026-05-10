@@ -1,0 +1,194 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Areas/Seller/Views/Shared/_SellerLayout.cshtml";
+}
+
+<h4 class="mb-4 fw-bold" style="color: #1e3a5f;">
+    <i class="fas fa-chart-line me-2"></i>Tổng quan kinh doanh
+</h4>
+
+<div class="d-flex justify-content-end mb-4">
+    <a href="/Seller/Dashboard/ExportOrdersCsv" class="btn btn-outline-dark rounded-pill px-4">
+        <i class="fas fa-file-export me-2"></i>Xuất báo cáo CSV
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="p-3 rounded-3 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #1e3a5f, #4a90d9);">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.8; letter-spacing: 1px;">Doanh thu</div>
+                    <h4 class="fw-bold mt-1 mb-0">@ViewBag.TotalRevenue.ToString("N0") đ</h4>
+                </div>
+                <i class="fas fa-money-bill-wave" style="font-size: 1.8rem; opacity: 0.2;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="p-3 rounded-3 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #0ea5e9, #38bdf8);">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.8; letter-spacing: 1px;">Tổng đơn</div>
+                    <h4 class="fw-bold mt-1 mb-0">@ViewBag.TotalOrders</h4>
+                </div>
+                <i class="fas fa-shopping-bag" style="font-size: 1.8rem; opacity: 0.2;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="p-3 rounded-3 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.8; letter-spacing: 1px;">Chờ xử lý</div>
+                    <h4 class="fw-bold mt-1 mb-0">@ViewBag.PendingOrders</h4>
+                </div>
+                <i class="fas fa-clock" style="font-size: 1.8rem; opacity: 0.2;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="p-3 rounded-3 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #10b981, #34d399);">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.8; letter-spacing: 1px;">Sản phẩm</div>
+                    <h4 class="fw-bold mt-1 mb-0">@ViewBag.TotalProducts</h4>
+                </div>
+                <i class="fas fa-box-open" style="font-size: 1.8rem; opacity: 0.2;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="p-3 rounded-3 border" style="background: #f8fafc;">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; background: #e0e7ff;">
+                    <i class="fas fa-tags" style="color: #4a90d9;"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #6b7280;">Danh mục</div>
+                    <strong style="font-size: 1.1rem;">@ViewBag.TotalCategories</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-3 rounded-3 border" style="background: #f8fafc;">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; background: #fce7f3;">
+                    <i class="fas fa-ticket-alt" style="color: #ec4899;"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #6b7280;">Voucher</div>
+                    <strong style="font-size: 1.1rem;">@ViewBag.TotalVouchers</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-3 rounded-3 border" style="background: #f8fafc;">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; background: #d1fae5;">
+                    <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #6b7280;">Hoàn thành</div>
+                    <strong style="font-size: 1.1rem;">@ViewBag.CompletedOrders</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cảnh báo sắp hết hàng -->
+@if (ViewBag.LowStockProducts != null && ((List<webclothes.Models.Product>)ViewBag.LowStockProducts).Any())
+{
+    <div class="alert alert-warning border-0 shadow-sm mb-4" style="border-radius: 12px; border-left: 4px solid #f59e0b !important;">
+        <div class="d-flex align-items-center mb-2">
+            <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+            <strong>⚠️ Sản phẩm sắp hết hàng</strong>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var p in (List<webclothes.Models.Product>)ViewBag.LowStockProducts)
+            {
+                <a href="/Seller/Products" class="badge rounded-pill text-dark text-decoration-none px-3 py-2" style="background: #fef3c7; border: 1px solid #fbbf24;">
+                    @p.Name <span class="fw-bold text-danger">(@p.StockQuantity)</span>
+                </a>
+            }
+        </div>
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="p-4 border rounded-3" style="background: #fff;">
+            <h6 class="mb-3 fw-bold" style="color: #1e3a5f;">Biểu đồ doanh thu @DateTime.Now.Year</h6>
+            <canvas id="revenueChart" height="160"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="p-4 border rounded-3" style="background: #fff; height: 100%;">
+            <h6 class="mb-3 fw-bold" style="color: #1e3a5f;">Đơn hàng gần đây</h6>
+            @if (ViewBag.RecentOrders != null)
+            {
+                @foreach (var order in (List<webclothes.Models.Order>)ViewBag.RecentOrders)
+                {
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <span class="fw-bold" style="font-size: 0.85rem;">#@order.Id</span>
+                            <span class="text-muted" style="font-size: 0.78rem;"> - @order.CustomerName</span>
+                        </div>
+                        <span class="badge rounded-pill" style="background: @(order.Status == "Hoàn thành" ? "#10b981" : order.Status == "Chờ xử lý" ? "#f59e0b" : "#6b7280"); font-size: 0.7rem;">
+                            @order.Status
+                        </span>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var ctx = document.getElementById('revenueChart').getContext('2d');
+            var rawData = "@ViewBag.ChartData".split(',').map(Number);
+
+            var gradient = ctx.createLinearGradient(0, 0, 0, 350);
+            gradient.addColorStop(0, 'rgba(30, 58, 95, 0.3)');
+            gradient.addColorStop(1, 'rgba(74, 144, 217, 0.02)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: rawData,
+                        borderColor: '#1e3a5f',
+                        backgroundColor: gradient,
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#4a90d9',
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: function(v) { return v.toLocaleString() + ' đ'; } }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

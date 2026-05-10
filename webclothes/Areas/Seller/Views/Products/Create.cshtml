@@ -1,0 +1,83 @@
+﻿@model webclothes.Models.Product
+@{
+    ViewData["Title"] = "Thêm sản phẩm";
+    Layout = "~/Areas/Seller/Views/Shared/_SellerLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #1e3a5f, #4a90d9);">
+                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Đăng bán sản phẩm mới</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên sản phẩm <span class="text-danger">*</span></label>
+                        <input asp-for="Name" class="form-control" required placeholder="Ví dụ: Áo sơ mi nam cao cấp" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mô tả sản phẩm <span class="text-danger">*</span></label>
+                        <textarea asp-for="Description" class="form-control" rows="4" required placeholder="Nhập mô tả sản phẩm"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Danh mục <span class="text-danger">*</span></label>
+                            <select asp-for="CategoryId" class="form-select" asp-items="@ViewBag.Categories" required>
+                                <option value="">-- Chọn --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Giá bán (VNĐ) <span class="text-danger">*</span></label>
+                            <input asp-for="Price" type="number" class="form-control" required placeholder="VD: 250000" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Tồn kho <span class="text-danger">*</span></label>
+                            <input asp-for="StockQuantity" type="number" class="form-control" required min="0" placeholder="VD: 100" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Kích cỡ (Size)</label>
+                        <input asp-for="Size" class="form-control" placeholder="VD: S, M, L, XL, XXL" />
+                        <small class="text-muted">Nhập các size cách nhau bằng dấu phẩy</small>
+                    </div>
+
+                    <div class="card mb-4 border-danger border-opacity-25">
+                        <div class="card-header bg-danger bg-opacity-10 fw-semibold text-danger" style="font-size: 0.9rem;">
+                            <i class="fas fa-fire me-1"></i> Flash Sale (Tùy chọn)
+                        </div>
+                        <div class="card-body py-2">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label fw-semibold small">Giá Sale (VNĐ)</label>
+                                    <input asp-for="SalePrice" type="number" class="form-control form-control-sm" placeholder="Để trống nếu không Sale" min="0" />
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label fw-semibold small">Kết thúc Sale</label>
+                                    <input asp-for="SaleEndDate" type="datetime-local" class="form-control form-control-sm" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Ảnh đại diện sản phẩm</label>
+                        <input type="file" name="imageFile" class="form-control mb-2" accept="image/*,.avif,.webp" />
+                        <small class="text-muted d-block mb-1">Thêm các ảnh phụ (Gallery):</small>
+                        <input type="file" name="galleryFiles" class="form-control" accept="image/*,.avif,.webp" multiple />
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn text-white px-4" style="background: linear-gradient(135deg, #1e3a5f, #4a90d9); border: none;">
+                            <i class="fas fa-save me-1"></i> Lưu sản phẩm
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

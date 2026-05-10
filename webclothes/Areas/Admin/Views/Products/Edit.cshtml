@@ -1,4 +1,4 @@
-@model webclothes.Models.Product
+﻿@model webclothes.Models.Product
 @{
     ViewData["Title"] = "Sửa Sản phẩm";
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
@@ -28,25 +28,72 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">Danh mục *</label>
                             <select asp-for="CategoryId" class="form-select" asp-items="@ViewBag.Categories" required>
-                                <option value="">-- Chọn danh mục --</option>
+                                <option value="">-- Chọn --</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label fw-bold">Giá bán (VNĐ) *</label>
                             <input asp-for="Price" type="number" class="form-control" required />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Tồn kho *</label>
+                            <input asp-for="StockQuantity" type="number" class="form-control" required min="0" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Kích cỡ (Size)</label>
+                        <input asp-for="Size" class="form-control" placeholder="VD: S, M, L, XL, XXL" />
+                        <small class="text-muted">Nhập các size cách nhau bằng dấu phẩy</small>
+                    </div>
+
+                    <div class="card mb-4 border-danger border-opacity-25">
+                        <div class="card-header bg-danger bg-opacity-10 fw-bold text-danger">
+                            <i class="fas fa-fire me-1"></i> Flash Sale (Tùy chọn)
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Giá Sale</label>
+                                    <input asp-for="SalePrice" type="number" class="form-control" placeholder="Để trống nếu không Sale" min="0" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Kết thúc Sale</label>
+                                    <input asp-for="SaleEndDate" type="datetime-local" class="form-control" />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Hình ảnh sản phẩm (Chọn ảnh mới nếu muốn thay đổi)</label>
-                        <input type="file" name="imageFile" class="form-control" accept="image/*" />
-
+                        <label class="form-label fw-bold">Ảnh đại diện (Chọn ảnh mới nếu muốn thay đổi)</label>
+                        <input type="file" name="imageFile" class="form-control mb-2" accept="image/*,.avif,.webp" />
                         @if (!string.IsNullOrEmpty(Model.ImageName))
                         {
-                            <small class="text-muted mt-1 d-block">Ảnh hiện tại: @Model.ImageName</small>
+                            <small class="text-muted d-block mb-3">Ảnh hiện tại: @Model.ImageName</small>
+                        }
+
+                        <hr />
+                        
+                        <label class="form-label fw-bold">Thư viện ảnh phụ (Gallery)</label>
+                        <input type="file" name="galleryFiles" class="form-control mb-3" accept="image/*,.avif,.webp" multiple />
+                        
+                        @if (Model.Images != null && Model.Images.Any())
+                        {
+                            <div class="row g-2" id="gallery-container">
+                                @foreach (var img in Model.Images)
+                                {
+                                    <div class="col-3 position-relative" id="gallery-img-@img.Id">
+                                        <img src="@img.ImageUrl" class="img-thumbnail" style="width: 100%; height: 100px; object-fit: cover;" />
+                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 btn-delete-gallery" data-id="@img.Id" style="padding: 0.1rem 0.3rem;">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
                         }
                     </div>
 
@@ -59,3 +106,39 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.querySelectorAll('.btn-delete-gallery').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const imgId = this.getAttribute('data-id');
+                Swal.fire({
+                    title: 'Xóa ảnh này?',
+                    text: "Hành động này không thể hoàn tác!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Có, xóa đi!',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch('@Url.Action("DeleteGalleryImage", "Products", new { area = "Admin" })/' + imgId, {
+                            method: 'POST'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if(data.success) {
+                                document.getElementById('gallery-img-' + imgId).remove();
+                                Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
+                            } else {
+                                Swal.fire('Lỗi', data.message, 'error');
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

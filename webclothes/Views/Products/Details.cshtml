@@ -3,6 +3,24 @@
 @{
     ViewData["Title"] = Model.Name;
     var relatedProducts = ViewBag.RelatedProducts as List<webclothes.Models.Product>;
+    double avgRating = ViewBag.AverageRating ?? 0.0;
+    int reviewCount = ViewBag.ReviewCount ?? 0;
+    bool isInWishlist = ViewBag.IsInWishlist ?? false;
+    bool canReview = ViewBag.CanReview ?? false;
+    bool hasReviewed = ViewBag.HasReviewed ?? false;
+    var currentUserReview = ViewBag.CurrentUserReview as webclothes.Models.Review;
+}
+
+@section MetaTags {
+    <meta name="description" content="@Model.Name - @(string.IsNullOrEmpty(Model.Description) ? "Thời trang thiết kế cao cấp WebClothes" : Model.Description.Substring(0, Math.Min(Model.Description.Length, 150)))" />
+    <meta property="og:title" content="@Model.Name | WEBCLOTHES" />
+    <meta property="og:description" content="@(string.IsNullOrEmpty(Model.Description) ? "Khám phá phong cách thời trang đỉnh cao cùng WebClothes." : Model.Description.Substring(0, Math.Min(Model.Description.Length, 150)))" />
+    <meta property="og:image" content="@(!string.IsNullOrEmpty(Model.MainImageUrl) ? Model.MainImageUrl : "/images/default-product.jpg")" />
+    <meta property="og:type" content="product" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@Model.Name | WEBCLOTHES" />
+    <meta name="twitter:description" content="@(string.IsNullOrEmpty(Model.Description) ? "Khám phá phong cách thời trang đỉnh cao cùng WebClothes." : Model.Description.Substring(0, Math.Min(Model.Description.Length, 150)))" />
+    <meta name="twitter:image" content="@(!string.IsNullOrEmpty(Model.MainImageUrl) ? Model.MainImageUrl : "/images/default-product.jpg")" />
 }
 
 <div class="bg-light py-4 mb-5">
@@ -10,7 +28,11 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="/" class="text-dark text-decoration-none">Trang chủ</a></li>
-                <li class="breadcrumb-item"><a asp-action="Index" asp-route-categoryId="@Model.CategoryId" class="text-dark text-decoration-none">@(Model.Category?.Name ?? "Sản phẩm")</a></li>
+                <li class="breadcrumb-item">
+                    <a asp-action="Index" asp-route-categoryId="@Model.CategoryId" class="text-dark text-decoration-none">
+                        @(Model.Category?.Name ?? "Sản phẩm")
+                    </a>
+                </li>
                 <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
             </ol>
         </nav>
@@ -19,85 +41,311 @@
 
 <div class="container pb-5 mb-5">
     <div class="row g-5">
-        <!-- Ảnh sản phẩm -->
         <div class="col-md-6" data-aos="fade-right">
-            <div class="border rounded px-4 py-5 bg-white position-relative text-center shadow-sm" style="height: 600px; display: flex; align-items: center; justify-content: center;">
-                @if (Model.Price < 500000)
+            <div class="border rounded px-4 py-5 bg-white position-relative text-center shadow-sm mb-3" style="height: 500px; display: flex; align-items: center; justify-content: center;">
+                @if (Model.IsOnSale)
+                {
+                    <span class="badge bg-danger position-absolute top-0 start-0 m-3 px-3 py-2 rounded-pill" style="z-index: 2; font-size: 0.9rem;">
+                        SALE -@(Math.Round((1 - Model.SalePrice!.Value / Model.Price) * 100))%
+                    </span>
+                }
+                else if (Model.Price < 500000)
                 {
                     <span class="badge bg-danger position-absolute top-0 start-0 m-3 px-3 py-2 rounded-pill" style="z-index: 2;">HOT</span>
                 }
-                
-                @if (!string.IsNullOrEmpty(Model.ImageName))
+
+                @if (!string.IsNullOrEmpty(Model.MainImageUrl))
                 {
-                    <img src="~/images/products/@Model.ImageName" alt="@Model.Name" class="img-fluid" style="max-height: 100%; object-fit: contain; zoom: 1.2;" />
+                    <img id="main-product-image" src="@Model.MainImageUrl" alt="@Model.Name" class="img-fluid" style="max-height: 100%; object-fit: contain; zoom: 1.2; transition: 0.3s;" />
                 }
                 else
                 {
-                    <img src="https://images.unsplash.com/photo-1515347619253-122cb41a4a16?q=80&w=600&auto=format&fit=crop" alt="@Model.Name" class="img-fluid" style="max-height: 100%; object-fit: contain;" />
+                    <img id="main-product-image" src="https://images.unsplash.com/photo-1515347619253-122cb41a4a16?q=80&w=600&auto=format&fit=crop" alt="@Model.Name" class="img-fluid" style="max-height: 100%; object-fit: contain; transition: 0.3s;" />
+                }
+
+                @if (Model.IsOnSale && Model.SaleEndDate.HasValue)
+                {
+                    <div class="position-absolute bottom-0 start-0 end-0 p-3" style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
+                        <div class="text-white text-center">
+                            <small class="text-uppercase" style="letter-spacing: 2px;">Kết thúc sau</small>
+                            <div id="sale-countdown" class="fw-bold fs-5" data-end="@Model.SaleEndDate.Value.ToString("yyyy-MM-ddTHH:mm:ss")"></div>
+                        </div>
+                    </div>
                 }
             </div>
+
+            @if (Model.Images != null && Model.Images.Any())
+            {
+                <div class="d-flex gap-2 overflow-auto py-2 gallery-thumbnails">
+                    <img src="@Model.MainImageUrl" class="img-thumbnail cursor-pointer active-thumb" style="width: 80px; height: 80px; object-fit: cover; border-color: #000; cursor: pointer;" onclick="changeMainImage(this.src, this)" />
+                    @foreach(var img in Model.Images)
+                    {
+                        <img src="@img.ImageUrl" class="img-thumbnail cursor-pointer opacity-75" style="width: 80px; height: 80px; object-fit: cover; transition: 0.3s; cursor: pointer;" onclick="changeMainImage(this.src, this)" onmouseover="this.classList.remove('opacity-75')" onmouseout="if(!this.classList.contains('active-thumb')) this.classList.add('opacity-75')" />
+                    }
+                </div>
+            }
         </div>
 
-        <!-- Thông tin chi tiết -->
         <div class="col-md-6" data-aos="fade-left">
             <h1 class="fw-bold mb-3" style="font-size: 2.5rem; letter-spacing: -1px;">@Model.Name</h1>
-            
+
             <div class="d-flex align-items-center mb-4 pb-4 border-bottom">
-                <div class="text-danger fw-bold fs-2 me-4">
-                    @Model.Price.ToString("N0") <span class="fs-4">VNĐ</span>
+                <div class="me-4">
+                    @if (Model.IsOnSale)
+                    {
+                        <div class="text-muted text-decoration-line-through" style="font-size: 1.1rem;">@Model.Price.ToString("N0") VNĐ</div>
+                        <div class="text-danger fw-bold fs-2">@Model.DisplayPrice.ToString("N0") <span class="fs-4">VNĐ</span></div>
+                        <span class="badge bg-danger">Tiết kiệm @((Model.Price - Model.DisplayPrice).ToString("N0"))đ</span>
+                    }
+                    else
+                    {
+                        <div class="text-danger fw-bold fs-2">@Model.Price.ToString("N0") <span class="fs-4">VNĐ</span></div>
+                    }
                 </div>
                 <div>
-                    <i class="fa-solid fa-star text-warning"></i>
-                    <i class="fa-solid fa-star text-warning"></i>
-                    <i class="fa-solid fa-star text-warning"></i>
-                    <i class="fa-solid fa-star text-warning"></i>
-                    <i class="fa-solid fa-star-half-stroke text-warning"></i>
-                    <span class="text-muted ms-2">(129 đánh giá)</span>
+                    @{
+                        int fullStars = (int)Math.Floor(avgRating);
+                        bool hasHalf = (avgRating - fullStars) >= 0.3;
+                    }
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        if (i <= fullStars)
+                        {
+                            <i class="fa-solid fa-star text-warning"></i>
+                        }
+                        else if (i == fullStars + 1 && hasHalf)
+                        {
+                            <i class="fa-solid fa-star-half-stroke text-warning"></i>
+                        }
+                        else
+                        {
+                            <i class="fa-regular fa-star text-warning"></i>
+                        }
+                    }
+                    <span class="text-muted ms-2">@avgRating/5 (@reviewCount đáĐánh giáá)</span>
                 </div>
             </div>
 
-            <div class="mb-4">
-                <h5 class="fw-bold mb-3">Mô tả sản phẩm</h5>
-                <p class="text-muted lh-lg" style="font-size: 1.1rem; min-height: 120px;">
-                    @(string.IsNullOrEmpty(Model.Description) ? "Mang lại trải nghiệm thời trang tuyệt vời với chất liệu cao cấp và kiểu dáng hiện đại. Phù hợp cho mọi sự kiện từ công sở đến dạo phố." : Model.Description)
-                </p>
-                <ul class="list-unstyled text-muted mt-3">
-                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Chất liệu nhập khẩu cao cấp</li>
-                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Thiết kế form dáng chuẩn mực</li>
-                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Đường may tỉ mỉ, tinh tế</li>
-                </ul>
+            <ul class="nav nav-tabs mb-3" role="tablist">
+                <li class="nav-item"><a class="nav-link active fw-bold" data-bs-toggle="tab" href="#tab-desc">Mô tả</a></li>
+                <li class="nav-item"><a class="nav-link fw-bold" data-bs-toggle="tab" href="#tab-info">Thông tin</a></li>
+                <li class="nav-item"><a class="nav-link fw-bold" data-bs-toggle="tab" href="#tab-policy">Chính sách</a></li>
+            </ul>
+
+            <div class="tab-content mb-4" style="min-height: 150px;">
+                <div class="tab-pane fade show active" id="tab-desc">
+                    <p class="text-muted lh-lg" style="font-size: 1.05rem;">
+                        @(string.IsNullOrEmpty(Model.Description) ? "Mang lại trải nghiệm thời trang tuyệt vời với chất liệu cao cấp và kiểu dáng hiện đại." : Model.Description)
+                    </p>
+                </div>
+                <div class="tab-pane fade" id="tab-info">
+                    @if (!string.IsNullOrEmpty(Model.Size))
+                    {
+                        <div class="mb-3">
+                            <h6 class="fw-bold mb-2"><i class="fa-solid fa-ruler me-2"></i>Kích cỡ:</h6>
+                            <div class="d-flex flex-wrap gap-2" id="size-selector">
+                                <input type="hidden" id="selected-size" name="size" value="" />
+                                @foreach (var size in Model.Size.Split(',', StringSplitOptions.TrimEntries))
+                                {
+                                    <button type="button" class="btn btn-outline-dark px-3 py-2 rounded-pill size-btn" data-size="@size" onclick="selectSize(this)">@size</button>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <h6 class="fw-bold mb-2"><i class="fa-solid fa-warehouse me-2"></i>Tình trạng kho:</h6>
+                        @if (Model.StockQuantity > 0)
+                        {
+                            <span class="badge bg-success px-3 py-2 fs-6">Còn hàng (@Model.StockQuantity)</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger px-3 py-2 fs-6">Hết hàng</span>
+                        }
+                    </div>
+
+                    <ul class="list-unstyled text-muted mt-3">
+                        <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Chất liệu nhập khẩu cao cấp</li>
+                        <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Thiết kế form dáng chuẩn mực</li>
+                        <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Đường may tỉ mỉ, tinh tế</li>
+                    </ul>
+                </div>
+                <div class="tab-pane fade" id="tab-policy">
+                    <div class="d-flex mb-3">
+                        <div class="fs-4 text-dark me-3"><i class="fa-solid fa-truck-fast"></i></div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Giao hàng miễn phí</h6>
+                            <small class="text-muted">Áp dụng cho mọi đơn hàng toàn quốc.</small>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="fs-4 text-dark me-3"><i class="fa-solid fa-rotate-left"></i></div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Đổi trả 30 ngày</h6>
+                            <small class="text-muted">Đổi trả nhanh chóng trong 30 ngày nếu không vừa ý.</small>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <div class="fs-4 text-dark me-3"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Bảo hành chính hãng</h6>
+                            <small class="text-muted">Cam kết hàng chính hãng 100%.</small>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="d-flex gap-3 mt-5">
+            <div class="d-flex gap-3 mt-4">
                 <button type="button" class="btn btn-dark btn-lg px-5 py-3 fw-bold rounded-pill btn-add-cart flex-grow-1 shadow" data-id="@Model.Id" style="letter-spacing: 1px;">
                     <i class="fa-solid fa-cart-shopping me-2"></i> THÊM VÀO GIỎ
                 </button>
-                <button class="btn btn-outline-danger btn-lg px-4 rounded-circle" aria-label="Yêu thích" title="Thêm vào yêu thích">
-                    <i class="fa-regular fa-heart"></i>
+                <button class="btn btn-outline-danger btn-lg px-4 rounded-circle btn-wishlist" data-id="@Model.Id" aria-label="Yêu thích" title="Yêu thích">
+                    <i class="@(isInWishlist ? "fa-solid" : "fa-regular") fa-heart"></i>
                 </button>
-            </div>
-            
-            <div class="mt-5 border p-4 rounded bg-light">
-                <div class="d-flex mb-3">
-                    <div class="fs-4 text-dark me-3"><i class="fa-solid fa-truck-fast"></i></div>
-                    <div>
-                        <h6 class="fw-bold mb-1">Giao hàng miễn phí</h6>
-                        <small class="text-muted">Áp dụng cho mọi đơn hàng toàn quốc.</small>
-                    </div>
-                </div>
-                <div class="d-flex">
-                    <div class="fs-4 text-dark me-3"><i class="fa-solid fa-rotate-left"></i></div>
-                    <div>
-                        <h6 class="fw-bold mb-1">Đổi trả miễn phí</h6>
-                        <small class="text-muted">Đổi trả nhanh chóng trong 30 ngày nếu không vừa ý.</small>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Lưới sản phẩm liên quan -->
+<div class="container mb-5 pt-4">
+    <div class="d-flex align-items-center mb-4 border-bottom pb-3">
+        <h3 class="fw-bold mb-0 me-3">ĐÁĐánh giáÁ SẢN PHẨM</h3>
+        <span class="badge bg-dark rounded-pill px-3 py-2">@reviewCount</span>
+        @if (reviewCount > 0)
+        {
+            <span class="ms-3">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    if (i <= (int)Math.Floor(avgRating))
+                    {
+                        <i class="fa-solid fa-star text-warning"></i>
+                    }
+                    else
+                    {
+                        <i class="fa-regular fa-star text-warning"></i>
+                    }
+                }
+                <strong class="ms-1">@avgRating</strong>
+            </span>
+        }
+    </div>
+
+    @if (TempData["SuccessMsg"] != null)
+    {
+        <div class="alert alert-success"><i class="fa-solid fa-check-circle"></i> @TempData["SuccessMsg"]</div>
+    }
+    @if (TempData["ErrorMsg"] != null)
+    {
+        <div class="alert alert-danger"><i class="fa-solid fa-triangle-exclamation"></i> @TempData["ErrorMsg"]</div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            @if (Model.Reviews != null && Model.Reviews.Any())
+            {
+                @foreach (var review in Model.Reviews.OrderByDescending(r => r.CreatedAt))
+                {
+                    <div class="mb-4 bg-light p-4 rounded shadow-sm">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="fw-bold"><i class="fa-solid fa-user-circle me-1"></i> @(review.User?.UserName ?? "Khách hàng")</span>
+                            <small class="text-muted">@review.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                        </div>
+                        <div class="mb-2">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= review.Rating)
+                                {
+                                    <i class="fa-solid fa-star text-warning"></i>
+                                }
+                                else
+                                {
+                                    <i class="fa-regular fa-star text-warning"></i>
+                                }
+                            }
+                        </div>
+                        <p class="mb-0">@review.Comment</p>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center p-5 bg-light rounded">
+                    <i class="fa-regular fa-comments fs-1 text-muted mb-3"></i>
+                    <p class="text-muted mb-0">Chưa có đáĐánh giáá nào cho sản phẩm này.</p>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-4">
+            @if (canReview)
+            {
+                <div class="p-4 border rounded bg-white shadow-sm position-sticky" style="top: 100px;">
+                    <h5 class="fw-bold mb-3">Viết đáĐánh giáá của bạn</h5>
+                    <form asp-action="AddReview" method="post">
+                        <input type="hidden" name="productId" value="@Model.Id" />
+                        <div class="mb-3">
+                            <label class="form-label">Chọn số sao</label>
+                            <div class="star-rating d-flex gap-1 fs-4">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <i class="fa-regular fa-star text-warning star-pick" data-value="@i" style="cursor:pointer;"></i>
+                                }
+                            </div>
+                            <input type="hidden" name="rating" id="rating-input" value="5" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Bình luận</label>
+                            <textarea name="comment" class="form-control" rows="4" required maxlength="1000" placeholder="Dáng đẹp, chất vải mát..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-dark w-100 fw-bold">GỬI ĐÁĐánh giáÁ</button>
+                    </form>
+                </div>
+            }
+            else if (hasReviewed)
+            {
+                <div class="p-4 border rounded bg-light position-sticky" style="top: 100px;">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-circle-check text-success fs-3 me-2"></i>
+                        <div>
+                            <h5 class="fw-bold mb-0">Bạn đã đáĐánh giáá</h5>
+                            <small class="text-muted">Mỗi tài khoản chỉ gửi 1 review cho mỗi sản phẩm.</small>
+                        </div>
+                    </div>
+
+                    @if (currentUserReview != null)
+                    {
+                        <div class="bg-white border rounded p-3">
+                            <div class="mb-2">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= currentUserReview.Rating)
+                                    {
+                                        <i class="fa-solid fa-star text-warning"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-regular fa-star text-warning"></i>
+                                    }
+                                }
+                            </div>
+                            <p class="mb-1">@currentUserReview.Comment</p>
+                            <small class="text-muted">@currentUserReview.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="p-4 border rounded bg-light text-center position-sticky" style="top: 100px;">
+                    <i class="fa-solid fa-lock fs-1 text-muted mb-3"></i>
+                    <p class="mb-0 text-muted">Bạn cần mua và nhận hàng thành công để có thể đáĐánh giáá sản phẩm này.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
 @if (relatedProducts != null && relatedProducts.Any())
 {
     <div class="container mb-5 pb-5 border-top pt-5">
@@ -107,10 +355,15 @@
             {
                 <div class="col-lg-3 col-md-4 col-sm-6" data-aos="fade-up">
                     <div class="product-card h-100 border-0 shadow-sm">
+                        @if (item.IsOnSale)
+                        {
+                            <span class="position-absolute top-0 start-0 m-2 badge bg-danger rounded-pill px-2 py-1" style="z-index:11; font-size:0.7rem;">SALE</span>
+                        }
+
                         <div class="product-img-wrapper" style="padding-top: 100%;">
-                            @if (!string.IsNullOrEmpty(item.ImageName))
+                            @if (!string.IsNullOrEmpty(item.MainImageUrl))
                             {
-                                <img src="~/images/products/@item.ImageName" alt="@item.Name" loading="lazy" />
+                                <img src="@item.MainImageUrl" alt="@item.Name" loading="lazy" />
                             }
                             else
                             {
@@ -119,8 +372,18 @@
                         </div>
 
                         <div class="product-info py-3">
-                            <a asp-action="Details" asp-route-id="@item.Id" class="product-title">@item.Name</a>
-                            <div class="product-price mb-2">@item.Price.ToString("N0") VNĐ</div>
+                            <a asp-action="Details" asp-route-id="@(item.Slug ?? item.Id.ToString())" class="product-title">@item.Name</a>
+                            <div class="product-price mb-2">
+                                @if (item.IsOnSale)
+                                {
+                                    <span class="text-decoration-line-through text-muted me-1" style="font-size:0.8rem;">@item.Price.ToString("N0")</span>
+                                    <span class="text-danger fw-bold">@item.DisplayPrice.ToString("N0") VNĐ</span>
+                                }
+                                else
+                                {
+                                    @item.Price.ToString("N0") <text>VNĐ</text>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -133,53 +396,136 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.querySelectorAll('.btn-add-cart').forEach(button => {
-            button.addEventListener('click', function() {
-                let productId = this.getAttribute('data-id');
+            button.addEventListener('click', function () {
+                const productId = this.getAttribute('data-id');
                 const btn = this;
-                
-                let originalContent = btn.innerHTML;
+                const originalContent = btn.innerHTML;
                 btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ĐANG XỬ LÝ...`;
                 btn.disabled = true;
 
-                let formData = new FormData();
+                const sizeInput = document.getElementById('selected-size');
+                const selectedSize = sizeInput ? sizeInput.value : '';
+
+                const formData = new FormData();
+                formData.append('productId', productId);
+                if (selectedSize) {
+                    formData.append('size', selectedSize);
+                }
+
+                fetch('@Url.Action("AddToCartAjax", "Cart")', { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(data => {
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+
+                        if (data.success) {
+                            Swal.fire({ icon: 'success', title: 'Thành công!', text: data.message, timer: 2000, showConfirmButton: false, toast: true, position: 'top-end' });
+                            const cartCounter = document.getElementById('cart-counter');
+                            if (cartCounter) {
+                                cartCounter.innerText = data.cartCount;
+                                cartCounter.style.transform = 'scale(1.3)';
+                                setTimeout(() => cartCounter.style.transform = 'scale(1) translate(-50%, -50%)', 300);
+                            }
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Lỗi', text: data.message });
+                        }
+                    })
+                    .catch(() => {
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+                    });
+            });
+        });
+
+        document.querySelectorAll('.btn-wishlist').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const productId = this.getAttribute('data-id');
+                const formData = new FormData();
                 formData.append('productId', productId);
 
-                fetch('@Url.Action("AddToCartAjax", "Cart")', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    btn.innerHTML = originalContent;
-                    btn.disabled = false;
-
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Thành công!',
-                            text: data.message,
-                            timer: 2000,
-                            showConfirmButton: false,
-                            toast: true,
-                            position: 'top-end'
-                        });
-
-                        let cartCounter = document.getElementById('cart-counter');
-                        if(cartCounter) {
-                            cartCounter.innerText = data.cartCount;
-                            cartCounter.style.transform = "scale(1.3)";
-                            setTimeout(() => cartCounter.style.transform = "scale(1) translate(-50%, -50%)", 300);
+                fetch('@Url.Action("Toggle", "Wishlist")', { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            return;
                         }
-                    } else {
-                        Swal.fire({ icon: 'error', title: 'Lỗi', text: data.message });
-                    }
-                })
-                .catch(error => {
-                    btn.innerHTML = originalContent;
-                    btn.disabled = false;
-                    console.error('Error:', error);
+
+                        const icon = this.querySelector('i');
+                        icon.className = data.added ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+                        Swal.fire({ icon: data.added ? 'success' : 'info', title: data.message, timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
+                    });
+            });
+        });
+
+        document.querySelectorAll('.star-pick').forEach(star => {
+            star.addEventListener('click', function () {
+                const val = Number(this.getAttribute('data-value'));
+                document.getElementById('rating-input').value = val;
+
+                document.querySelectorAll('.star-pick').forEach((item, index) => {
+                    item.className = index < val ? 'fa-solid fa-star text-warning star-pick' : 'fa-regular fa-star text-warning star-pick';
+                });
+            });
+
+            star.addEventListener('mouseenter', function () {
+                const val = Number(this.getAttribute('data-value'));
+                document.querySelectorAll('.star-pick').forEach((item, index) => {
+                    item.className = index < val ? 'fa-solid fa-star text-warning star-pick' : 'fa-regular fa-star text-warning star-pick';
                 });
             });
         });
+
+        const countdownEl = document.getElementById('sale-countdown');
+        if (countdownEl) {
+            const endDate = new Date(countdownEl.dataset.end);
+
+            setInterval(() => {
+                const now = new Date();
+                const diff = endDate - now;
+
+                if (diff <= 0) {
+                    countdownEl.textContent = 'Đã kết thúc!';
+                    return;
+                }
+
+                const d = Math.floor(diff / 86400000);
+                const h = Math.floor((diff % 86400000) / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                countdownEl.textContent = `${d > 0 ? d + ' ngày ' : ''}${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function changeMainImage(src, element) {
+            const mainImg = document.getElementById('main-product-image');
+            mainImg.style.opacity = 0;
+            setTimeout(() => {
+                mainImg.src = src;
+                mainImg.style.opacity = 1;
+            }, 150);
+
+            document.querySelectorAll('.gallery-thumbnails img').forEach(img => {
+                img.classList.remove('active-thumb');
+                img.classList.add('opacity-75');
+                img.style.borderColor = '#dee2e6';
+            });
+            element.classList.add('active-thumb');
+            element.classList.remove('opacity-75');
+            element.style.borderColor = '#000';
+        }
+
+        function selectSize(btn) {
+            document.querySelectorAll('.size-btn').forEach(b => {
+                b.classList.remove('btn-dark', 'text-white', 'active');
+                b.classList.add('btn-outline-dark');
+            });
+            btn.classList.remove('btn-outline-dark');
+            btn.classList.add('btn-dark', 'text-white', 'active');
+            
+            const sizeInput = document.getElementById('selected-size');
+            if (sizeInput) {
+                sizeInput.value = btn.getAttribute('data-size');
+            }
+        }
     </script>
 }

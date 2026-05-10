@@ -1,11 +1,46 @@
-﻿@model IEnumerable<webclothes.Models.Order>
+@model IEnumerable<webclothes.Models.Order>
 
 @{
     ViewData["Title"] = "Quản lý đơn hàng";
-    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml"; // Áp dụng giao diện Admin
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
-<h2 class="mb-4">Danh sách Đơn hàng</h2>
+<div class="card mb-4 shadow-sm border-0">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label text-muted small fw-bold">Tìm kiếm</label>
+                <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Mã ĐH, SĐT, Tên..." />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-muted small fw-bold">Trạng thái</label>
+                <select name="status" class="form-select">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="Chờ xử lý" selected="@(ViewData["CurrentStatus"]?.ToString() == "Chờ xử lý")">Chờ xử lý</option>
+                    <option value="Chờ thanh toán VNPay" selected="@(ViewData["CurrentStatus"]?.ToString() == "Chờ thanh toán VNPay")">Chờ thanh toán VNPay</option>
+                    <option value="Đã thanh toán (VNPay)" selected="@(ViewData["CurrentStatus"]?.ToString() == "Đã thanh toán (VNPay)")">Đã thanh toán (VNPay)</option>
+                    <option value="Chờ lấy hàng" selected="@(ViewData["CurrentStatus"]?.ToString() == "Chờ lấy hàng")">Chờ lấy hàng</option>
+                    <option value="Đang giao hàng" selected="@(ViewData["CurrentStatus"]?.ToString() == "Đang giao hàng")">Đang giao hàng</option>
+                    <option value="Hoàn thành" selected="@(ViewData["CurrentStatus"]?.ToString() == "Hoàn thành")">Hoàn thành</option>
+                    <option value="Thất bại" selected="@(ViewData["CurrentStatus"]?.ToString() == "Thất bại")">Thất bại</option>
+                    <option value="Đã hủy" selected="@(ViewData["CurrentStatus"]?.ToString() == "Đã hủy")">Đã hủy</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-muted small fw-bold">Từ ngày</label>
+                <input type="date" name="fromDate" value="@ViewData["FromDate"]" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-muted small fw-bold">Đến ngày</label>
+                <input type="date" name="toDate" value="@ViewData["ToDate"]" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <input type="hidden" name="sortOrder" value="@ViewData["CurrentSort"]" />
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-2"></i>Lọc</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <table class="table table-hover table-bordered text-center align-middle">
     <thead class="table-dark">
@@ -13,8 +48,18 @@
             <th>Mã ĐH</th>
             <th>Khách hàng</th>
             <th>Số điện thoại</th>
-            <th>Ngày đặt</th>
-            <th>Tổng tiền</th>
+            <th>
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["DateSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]" asp-route-status="@ViewData["CurrentStatus"]" asp-route-fromDate="@ViewData["FromDate"]" asp-route-toDate="@ViewData["ToDate"]" class="text-white text-decoration-none">
+                    Ngày đặt 
+                    @if (ViewData["CurrentSort"]?.ToString() == "date_asc") { <i class="fas fa-sort-up"></i> } else if (string.IsNullOrEmpty(ViewData["CurrentSort"]?.ToString())) { <i class="fas fa-sort-down"></i> } else { <i class="fas fa-sort text-muted"></i> }
+                </a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["TotalSortParm"]" asp-route-searchString="@ViewData["CurrentFilter"]" asp-route-status="@ViewData["CurrentStatus"]" asp-route-fromDate="@ViewData["FromDate"]" asp-route-toDate="@ViewData["ToDate"]" class="text-white text-decoration-none">
+                    Tổng tiền
+                    @if (ViewData["CurrentSort"]?.ToString() == "total_asc") { <i class="fas fa-sort-up"></i> } else if (ViewData["CurrentSort"]?.ToString() == "total_desc") { <i class="fas fa-sort-down"></i> } else { <i class="fas fa-sort text-muted"></i> }
+                </a>
+            </th>
             <th>Trạng thái</th>
             <th>Thao tác</th>
         </tr>
@@ -28,7 +73,21 @@
                 <td>@item.Phone</td>
                 <td>@item.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
                 <td class="text-danger fw-bold">@item.TotalAmount.ToString("N0") đ</td>
-                <td><span class="badge bg-warning text-dark">@item.Status</span></td>
+                <td>
+                    @{
+                        var badgeClass = item.Status switch
+                        {
+                            "Hoàn thành" => "bg-success",
+                            "Đã thanh toán (VNPay)" => "bg-success",
+                            "Đang giao hàng" => "bg-info",
+                            "Chờ lấy hàng" => "bg-primary",
+                            "Hủy đơn hàng" => "bg-danger",
+                            "Thất bại" => "bg-danger",
+                            _ => "bg-warning text-dark"
+                        };
+                    }
+                    <span class="badge @badgeClass">@item.Status</span>
+                </td>
                 <td>
                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info text-white"><i class="fas fa-eye"></i> Xem</a>
                 </td>

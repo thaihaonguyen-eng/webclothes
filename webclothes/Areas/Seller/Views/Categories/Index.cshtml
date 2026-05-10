@@ -1,0 +1,76 @@
+@model IEnumerable<webclothes.Models.Category>
+@{
+    ViewData["Title"] = "Danh mục";
+    Layout = "~/Areas/Seller/Views/Shared/_SellerLayout.cshtml";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0" style="color: #1e3a5f;">
+        <i class="fas fa-tags me-2"></i>Quản lý danh mục
+    </h4>
+    <div class="d-flex gap-2">
+        <form asp-action="Index" method="get" class="d-flex">
+            <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control me-2" placeholder="Tìm kiếm..." />
+            <button type="submit" class="btn btn-outline-secondary"><i class="fas fa-search"></i></button>
+        </form>
+        <a asp-action="Create" class="btn text-white px-4" style="background: linear-gradient(135deg, #1e3a5f, #4a90d9); border: none;">
+            <i class="fas fa-plus me-1"></i> Thêm danh mục
+        </a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr style="background: #1e3a5f; color: white;">
+                <th class="ps-3" style="border-radius: 8px 0 0 0;">Tên danh mục</th>
+                <th>Danh mục cha</th>
+                <th style="border-radius: 0 8px 0 0; width: 200px;">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="ps-3">
+                        @if (item.ParentCategoryId != null)
+                        {
+                            <i class="fa fa-level-up-alt text-muted fa-rotate-90 ms-3 me-2"></i>
+                        }
+                        <strong>@item.Name</strong>
+                    </td>
+                    <td>
+                        <span class="text-muted">@(item.ParentCategory != null ? item.ParentCategory.Name : "â€”")</span>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="fa fa-edit"></i> Sửa
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa danh mục này?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="fa fa-trash"></i> Xóa
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

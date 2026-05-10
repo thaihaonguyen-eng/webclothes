@@ -5,49 +5,47 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Danh sách danh mục</h2>
-    <a asp-action="Create" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm mới</a>
-</div>
-
-<div class="card shadow">
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
-    }
-    <div class="card-body">
-        <table class="table table-hover align-middle">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Tên danh mục</th>
-                    <th>Danh mục cha</th>
-                    <th width="250">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>
-                            @if (item.ParentCategoryId != null)
-                            {
-                                <i class="fa fa-level-up-alt text-muted fa-rotate-90 ms-3 me-2"></i>
-                            }
-                            <strong>@item.Name</strong>
-                        </td>
-                        <td>
-                            @(item.ParentCategory != null ? item.ParentCategory.Name : "-")
-                        </td>
-                        <td>
-                            <div class="d-flex gap-2">
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-info text-white"><i class="fa fa-edit"></i> Sửa</a>
-                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa danh mục này?');">
-                                    <button type="submit" class="btn btn-sm btn-danger"><i class="fa fa-trash"></i> Xóa</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <h2>Danh sách Danh mục</h2>
+    <div class="d-flex gap-2">
+        <form asp-action="Index" method="get" class="d-flex">
+            <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control me-2" placeholder="Tìm kiếm..." />
+            <button type="submit" class="btn btn-outline-secondary"><i class="fas fa-search"></i></button>
+        </form>
+        <a asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> Thêm danh mục mới</a>
     </div>
 </div>
+
+<table class="table table-hover table-bordered text-center align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Tên danh mục</th>
+            <th>Mô tả</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td class="fw-bold">@item.Name</td>
+                <td class="text-start">@item.Description</td>
+                <td>
+                    @if (item.IsDeleted)
+                    {
+                        <span class="badge bg-danger">Đã ẩn</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Hiển thị</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i> Sửa</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

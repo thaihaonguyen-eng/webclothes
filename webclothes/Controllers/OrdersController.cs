@@ -1,12 +1,13 @@
-using Microsoft.AspNetCore.Authorization; // Thêm để dùng [Authorize]
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using webclothes.Data;
 using webclothes.Models;
 
 namespace webclothes.Controllers
 {
-    [Authorize] // Bảo mật: Bắt buộc phải đăng nhập mới vào được các trang trong Controller này
+    [Authorize]
     public class OrdersController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -16,30 +17,43 @@ namespace webclothes.Controllers
             _context = context;
         }
 
-        // Trang lịch sử đơn hàng của khách
         public async Task<IActionResult> History()
         {
-            var userEmail = User.Identity.Name;
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userEmail = User.Identity?.Name;
+
             var orders = await _context.Orders
-                .Where(o => o.UserId == userEmail)
+                .Where(o => o.UserId == userId || o.UserId == userEmail)
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
 
             return View(orders);
         }
 
-        // Tác phong xịn: Thêm trang xem chi tiết một đơn hàng cụ thể (nếu cần)
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-            var userEmail = User.Identity.Name;
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userEmail = User.Identity?.Name;
+
             var order = await _context.Orders
                 .Include(o => o.OrderDetails)
                 .ThenInclude(d => d.Product)
-                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userEmail);
+                .FirstOrDefaultAsync(m => m.Id == id && (m.UserId == userId || m.UserId == userEmail));
 
-            if (order == null) return NotFound();
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            ViewBag.StatusHistory = await _context.OrderStatusHistories
+                .Where(h => h.OrderId == order.Id)
+                .OrderBy(h => h.ChangedAt)
+                .ToListAsync();
 
             return View(order);
         }

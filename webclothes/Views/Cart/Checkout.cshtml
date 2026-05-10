@@ -30,6 +30,23 @@
                         <textarea name="address" class="form-control form-control-lg" rows="3" required></textarea>
                     </div>
 
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-3">Phương thức thanh toán</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="paymentCOD" value="COD" checked>
+                            <label class="form-check-label" for="paymentCOD">
+                                Thanh toán khi nhận hàng (COD)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="paymentVNPAY" value="VNPAY">
+                            <label class="form-check-label" for="paymentVNPAY">
+                                Thanh toán trực tuyến qua VNPAY
+                                <img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/6/0oxhzjmxbksr1686814746087.png" alt="VNPay" height="24" class="ms-2" />
+                            </label>
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-dark w-100 py-3 fw-bold fs-5 rounded-pill shadow">ĐẶT HÀNG NGAY <i class="fa-solid fa-arrow-right ms-2"></i></button>
                 </form>
             </div>
@@ -43,17 +60,57 @@
                     {
                         <li class="list-group-item d-flex justify-content-between lh-sm bg-transparent border-bottom">
                             <div>
-                                <h6 class="my-0">@item.ProductName</h6>
+                                <h6 class="my-0">
+                                    @item.ProductName
+                                    @if (!string.IsNullOrEmpty(item.Size))
+                                    {
+                                        <span class="badge bg-secondary ms-1">@item.Size</span>
+                                    }
+                                </h6>
                                 <small class="text-muted">Số lượng: @item.Quantity</small>
                             </div>
                             <span class="text-muted">@((item.Price * item.Quantity).ToString("N0")) đ</span>
                         </li>
                     }
-                    <li class="list-group-item d-flex justify-content-between bg-transparent fw-bold fs-5 pt-3 border-0">
-                        <span>Tổng cộng (VNĐ)</span>
+                    <li class="list-group-item d-flex justify-content-between bg-transparent pt-3 border-0">
+                        <span>Tạm tính</span>
                         <strong>@Model.Sum(x => x.Price * x.Quantity).ToString("N0") <small>đ</small></strong>
                     </li>
+                    
+                    @if (ViewBag.Discount != null)
+                    {
+                        <li class="list-group-item d-flex justify-content-between bg-transparent border-0 text-success">
+                            <span>Giảm giá (Mã: @ViewBag.VoucherCode)</span>
+                            <strong>- @(((decimal)ViewBag.Discount).ToString("N0")) <small>đ</small></strong>
+                        </li>
+                    }
+
+                    <li class="list-group-item d-flex justify-content-between bg-transparent fw-bold fs-5 pt-3 border-top">
+                        <span>Tổng cộng (VNĐ)</span>
+                        @{
+                            decimal totalAmount = Model.Sum(x => x.Price * x.Quantity);
+                            decimal discountAmount = ViewBag.Discount != null ? (decimal)ViewBag.Discount : 0;
+                            if (discountAmount > totalAmount) discountAmount = totalAmount;
+                            decimal finalTotal = totalAmount - discountAmount;
+                        }
+                        <strong>@finalTotal.ToString("N0") <small>đ</small></strong>
+                    </li>
                 </ul>
+
+                <hr class="my-4" />
+                <h5 class="mb-3 fw-bold"><i class="fa-solid fa-ticket me-2"></i> Mã giảm giá</h5>
+                <form asp-action="ApplyVoucher" method="post" class="d-flex gap-2 mb-3">
+                    <input type="text" name="code" class="form-control" placeholder="Nhập mã voucher (VD: GIAM50K)" required />
+                    <button type="submit" class="btn btn-secondary">Áp dụng</button>
+                </form>
+                @if (TempData["VoucherError"] != null)
+                {
+                    <div class="text-danger small mt-2"><i class="fa-solid fa-triangle-exclamation"></i> @TempData["VoucherError"]</div>
+                }
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="text-success small mt-2"><i class="fa-solid fa-check-circle"></i> @TempData["SuccessMessage"]</div>
+                }
             </div>
         </div>
     </div>

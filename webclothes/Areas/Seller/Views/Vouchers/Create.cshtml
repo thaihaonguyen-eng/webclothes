@@ -1,0 +1,66 @@
+﻿@model webclothes.Models.Voucher
+@{
+    ViewData["Title"] = "Tạo Voucher";
+    Layout = "~/Areas/Seller/Views/Shared/_SellerLayout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #1e3a5f, #4a90d9);">
+                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Tạo Voucher mới</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mã Voucher <span class="text-danger">*</span></label>
+                        <input asp-for="Code" class="form-control" placeholder="VD: GIAM50K, SALE20..." style="text-transform: uppercase; font-family: monospace; font-weight: bold;" />
+                        <small class="text-muted">Mã khuyến mãi khách hàng sẽ nhập khi thanh toán</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Loại giảm giá <span class="text-danger">*</span></label>
+                        <select asp-for="DiscountType" class="form-select" id="discountType" onchange="toggleDiscountFields()">
+                            <option value="Fixed">Giảm số tiền cố định (VNĐ)</option>
+                            <option value="Percent">Giảm theo % đơn hàng</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" id="discountLabel">Số tiền giảm (VNĐ) <span class="text-danger">*</span></label>
+                        <input asp-for="DiscountAmount" type="number" class="form-control" required placeholder="VD: 50000" min="0" />
+                    </div>
+                    <div class="mb-3" id="maxDiscountGroup" style="display:none;">
+                        <label class="form-label fw-semibold">Giảm tối đa (VNĐ)</label>
+                        <input asp-for="MaxDiscount" type="number" class="form-control" placeholder="VD: 100000" min="0" />
+                        <small class="text-muted">Số tiền giảm tối đa khi dùng % (0 = không giới hạn)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Đơn tối thiểu (VNĐ)</label>
+                        <input asp-for="MinOrderAmount" type="number" class="form-control" placeholder="VD: 200000 (0 = không yêu cầu)" min="0" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số lượng <span class="text-danger">*</span></label>
+                        <input asp-for="Quantity" type="number" class="form-control" required placeholder="VD: 100" min="0" />
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Ngày hết hạn <span class="text-danger">*</span></label>
+                        <input asp-for="ExpiryDate" type="date" class="form-control" required />
+                    </div>
+                    <script>
+                        function toggleDiscountFields() {
+                            var type = document.getElementById('discountType').value;
+                            document.getElementById('maxDiscountGroup').style.display = type === 'Percent' ? 'block' : 'none';
+                            document.getElementById('discountLabel').textContent = type === 'Percent' ? '% Giảm giá *' : 'Số tiền giảm (VNĐ) *';
+                        }
+                        toggleDiscountFields();
+                    </script>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn text-white px-4" style="background: linear-gradient(135deg, #1e3a5f, #4a90d9); border: none;">
+                            <i class="fa fa-save me-1"></i> Tạo Voucher
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

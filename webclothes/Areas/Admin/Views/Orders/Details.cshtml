@@ -1,4 +1,4 @@
-﻿@model webclothes.Models.Order
+@model webclothes.Models.Order
 @{
     ViewData["Title"] = "Chi tiết Đơn hàng #" + Model.Id;
     Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
@@ -21,16 +21,33 @@
 
                 <hr />
                 <p class="mb-2"><strong>Trạng thái đơn hàng:</strong></p>
-                <form asp-action="UpdateStatus" method="post" class="d-flex gap-2">
-                    <input type="hidden" name="id" value="@Model.Id" />
-                    <select name="status" class="form-select form-select-sm w-auto" style="min-width: 150px;">
-                        <option value="Chờ xử lý" selected="@(Model.Status == "Chờ xử lý" ? "selected" : null)">Chờ xử lý</option>
-                        <option value="Đang giao hàng" selected="@(Model.Status == "Đang giao hàng" ? "selected" : null)">Đang giao hàng</option>
-                        <option value="Đã hoàn thành" selected="@(Model.Status == "Đã hoàn thành" ? "selected" : null)">Đã hoàn thành</option>
-                        <option value="Đã hủy" selected="@(Model.Status == "Đã hủy" ? "selected" : null)">Đã hủy</option>
-                    </select>
-                    <button type="submit" class="btn btn-sm btn-success">Cập nhật</button>
-                </form>
+                @if (User.IsInRole("Admin") || User.IsInRole("Seller"))
+                {
+                    <form asp-action="UpdateStatus" method="post" class="d-flex gap-2">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <select name="status" class="form-select form-select-sm w-auto" style="min-width: 150px;">
+                            <option value="Chờ xử lý" selected="@(Model.Status == "Chờ xử lý" ? "selected" : null)">Chờ xử lý</option>
+                            <option value="Chờ lấy hàng" selected="@(Model.Status == "Chờ lấy hàng" ? "selected" : null)">Chờ lấy hàng</option>
+                            <option value="Đang giao hàng" selected="@(Model.Status == "Đang giao hàng" ? "selected" : null)">Đang giao hàng</option>
+                            <option value="Hoàn thành" selected="@(Model.Status == "Hoàn thành" ? "selected" : null)">Hoàn thành</option>
+                            <option value="Thất bại" selected="@(Model.Status == "Thất bại" ? "selected" : null)">Thất bại</option>
+                            <option value="Đã hủy" selected="@(Model.Status == "Đã hủy" ? "selected" : null)">Đã hủy</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-success">Cập nhật</button>
+                    </form>
+                }
+                else if (User.IsInRole("Shipper"))
+                {
+                    <form asp-action="UpdateStatus" method="post" class="d-flex gap-2">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <select name="status" class="form-select form-select-sm w-auto" style="min-width: 150px;">
+                            <option value="Chờ lấy hàng" selected="@(Model.Status == "Chờ lấy hàng" ? "selected" : null)">Chờ lấy hàng</option>
+                            <option value="Hoàn thành" selected="@(Model.Status == "Hoàn thành" ? "selected" : null)">Hoàn thành</option>
+                            <option value="Thất bại" selected="@(Model.Status == "Thất bại" ? "selected" : null)">Thất bại</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-success">Cập nhật</button>
+                    </form>
+                }
 
             </div>
         </div>
@@ -44,6 +61,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Tên sản phẩm</th>
+                            <th>Kích cỡ</th>
                             <th>Đơn giá</th>
                             <th>Số lượng</th>
                             <th>Thành tiền</th>
@@ -54,6 +72,16 @@
                         {
                             <tr>
                                 <td class="text-start">@item.Product?.Name</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.Size))
+                                    {
+                                        <span class="badge bg-secondary">@item.Size</span>
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
+                                </td>
                                 <td>@item.Price.ToString("N0") đ</td>
                                 <td>x @item.Quantity</td>
                                 <td class="fw-bold">@((item.Price * item.Quantity).ToString("N0")) đ</td>
@@ -62,7 +90,7 @@
                     </tbody>
                     <tfoot class="table-light fw-bold">
                         <tr>
-                            <td colspan="3" class="text-end">TỔNG CỘNG:</td>
+                            <td colspan="4" class="text-end">TỔNG CỘNG:</td>
                             <td class="text-danger fs-5">@Model.TotalAmount.ToString("N0") đ</td>
                         </tr>
                     </tfoot>

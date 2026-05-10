@@ -1,4 +1,4 @@
-namespace webclothes.Models
+﻿namespace webclothes.Models
 {
     public class ErrorViewModel
     {

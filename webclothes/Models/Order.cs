@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace webclothes.Models
@@ -13,6 +13,13 @@ namespace webclothes.Models
         public decimal TotalAmount { get; set; }
         public string? Status { get; set; }
         public string? UserId { get; set; }
+        
+        public string? VoucherCode { get; set; }
+        public decimal DiscountAmount { get; set; }
+        public string? ShipperNote { get; set; }
+        public string? ShipperProofImageUrl { get; set; }
+
+        public bool IsDeleted { get; set; } = false;
 
         // Mối quan hệ 1 Đơn hàng có nhiều Chi tiết đơn hàng
         public List<OrderDetail>? OrderDetails { get; set; }

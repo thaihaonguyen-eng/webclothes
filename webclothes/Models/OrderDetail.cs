@@ -1,4 +1,4 @@
-﻿namespace webclothes.Models
+namespace webclothes.Models
 {
     public class OrderDetail
     {
@@ -12,5 +12,6 @@
 
         public int Quantity { get; set; }
         public decimal Price { get; set; }
+        public string? Size { get; set; }
     }
 }

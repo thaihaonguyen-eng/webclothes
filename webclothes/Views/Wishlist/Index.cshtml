@@ -1,0 +1,118 @@
+﻿@model IEnumerable<webclothes.Models.Wishlist>
+@{
+    ViewData["Title"] = "Sản phẩm yêu thích";
+}
+
+<div class="container py-5" style="min-height: 70vh;">
+    <div class="d-flex align-items-center mb-4 border-bottom pb-3">
+        <i class="fas fa-heart text-danger me-3" style="font-size: 2rem;"></i>
+        <div>
+            <h2 class="fw-bold mb-0">Sản phẩm yêu thích</h2>
+            <small class="text-muted">@Model.Count() sản phẩm</small>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="row g-4">
+            @foreach (var item in Model)
+            {
+                if (item.Product == null) continue;
+                <div class="col-lg-3 col-md-4 col-sm-6" data-aos="fade-up">
+                    <div class="product-card h-100 position-relative shadow-sm rounded overflow-hidden">
+                        @if (item.Product.StockQuantity <= 0)
+                        {
+                            <div class="position-absolute w-100 h-100 d-flex justify-content-center align-items-center" style="background: rgba(255,255,255,0.7); z-index: 10;">
+                                <span class="badge bg-danger fs-5 px-4 py-2" style="transform: rotate(-15deg);">HẾT HÀNG</span>
+                            </div>
+                        }
+
+                        @if (item.Product.IsOnSale)
+                        {
+                            <span class="position-absolute top-0 start-0 m-2 badge bg-danger px-3 py-2 rounded-pill" style="z-index: 11; font-size: 0.75rem;">
+                                SALE -@(Math.Round((1 - item.Product.SalePrice!.Value / item.Product.Price) * 100))%
+                            </span>
+                        }
+
+                        <div class="product-img-wrapper" style="padding-top: 100%;">
+                            @if (!string.IsNullOrEmpty(item.Product.MainImageUrl))
+                            {
+                                <img src="@item.Product.MainImageUrl" alt="@item.Product.Name" loading="lazy" />
+                            }
+                            else
+                            {
+                                <img src="https://images.unsplash.com/photo-1515347619253-122cb41a4a16?q=80&w=600&auto=format&fit=crop" alt="@item.Product.Name" loading="lazy" />
+                            }
+                        </div>
+
+                        <div class="product-info py-3 px-2">
+                            <a asp-controller="Products" asp-action="Details" asp-route-id="@item.Product.Id" class="product-title text-truncate d-block">
+                                @item.Product.Name
+                            </a>
+                            <div class="product-price mb-2">
+                                @if (item.Product.IsOnSale)
+                                {
+                                    <span class="text-decoration-line-through text-muted me-2" style="font-size: 0.85rem;">@item.Product.Price.ToString("N0")</span>
+                                    <span class="text-danger fw-bold">@item.Product.DisplayPrice.ToString("N0") <small>VNĐ</small></span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger fw-bold">@item.Product.Price.ToString("N0") <small>VNĐ</small></span>
+                                }
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                @if (item.Product.StockQuantity > 0)
+                                {
+                                    <button type="button" class="btn btn-dark btn-sm flex-grow-1 btn-add-cart rounded-pill" data-id="@item.Product.Id">
+                                        <i class="fa-solid fa-cart-plus me-1"></i> Thêm giỏ
+                                    </button>
+                                }
+                                <form asp-action="Remove" method="post">
+                                    <input type="hidden" name="productId" value="@item.Product.Id" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3" title="Bỏ yêu thích">
+                                        <i class="fas fa-heart-broken"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="far fa-heart text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+            <h4 class="text-muted mt-3">Bạn chưa yêu thích sản phẩm nào</h4>
+            <p class="text-muted">Hãy khám phá và thêm sản phẩm yêu thích nhé!</p>
+            <a href="/" class="btn btn-dark rounded-pill px-5 mt-2">KHÁM PHÁ NGAY</a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.querySelectorAll('.btn-add-cart').forEach(button => {
+            button.addEventListener('click', function() {
+                let productId = this.getAttribute('data-id');
+                const btn = this;
+                let originalContent = btn.innerHTML;
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+                btn.disabled = true;
+                let formData = new FormData();
+                formData.append('productId', productId);
+                fetch('@Url.Action("AddToCartAjax", "Cart")', { method: 'POST', body: formData })
+                .then(r => r.json()).then(data => {
+                    btn.innerHTML = originalContent; btn.disabled = false;
+                    if (data.success) {
+                        Swal.fire({ icon: 'success', title: 'Đã thêm!', text: data.message, timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
+                        let c = document.getElementById('cart-counter'); if(c) { c.innerText = data.cartCount; }
+                    } else { Swal.fire({ icon: 'error', title: 'Lỗi', text: data.message }); }
+                });
+            });
+        });
+    </script>
+}

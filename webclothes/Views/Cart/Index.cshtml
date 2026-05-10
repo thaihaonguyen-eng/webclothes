@@ -9,6 +9,14 @@
         Giỏ hàng của bạn
     </h2>
 
+    @if (TempData["CartError"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-circle-exclamation me-2"></i><strong>Lỗi:</strong> @TempData["CartError"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     @if (Model == null || Model.Count == 0)
     {
         <div class="text-center">
@@ -39,9 +47,22 @@
                                     <td class="py-4">
                                         <div class="d-flex align-items-center">
                                             <div style="width: 80px; height: 100px; background-color: #f0f0f0; margin-right: 20px; overflow: hidden;">
-                                                <img src="https://images.unsplash.com/photo-1515347619253-122cb41a4a16?q=80&w=200&auto=format&fit=crop" alt="@item.ProductName" style="width: 100%; height: 100%; object-fit: cover;" />
+                                                @if (!string.IsNullOrEmpty(item.ProductImage))
+                                                {
+                                                    <img src="@item.ProductImage" alt="@item.ProductName" style="width: 100%; height: 100%; object-fit: cover;" />
+                                                }
+                                                else
+                                                {
+                                                    <img src="https://images.unsplash.com/photo-1515347619253-122cb41a4a16?q=80&w=200&auto=format&fit=crop" alt="@item.ProductName" style="width: 100%; height: 100%; object-fit: cover;" />
+                                                }
                                             </div>
-                                            <span style="font-weight: 500;">@item.ProductName</span>
+                                            <span style="font-weight: 500;">
+                                                @item.ProductName
+                                                @if (!string.IsNullOrEmpty(item.Size))
+                                                {
+                                                    <span class="badge bg-secondary ms-2">Size: @item.Size</span>
+                                                }
+                                            </span>
                                         </div>
                                     </td>
                                     <td class="py-4 text-center">
@@ -49,13 +70,13 @@
                                     </td>
                                     <td class="py-4 text-center">
                                         <div class="d-flex justify-content-center align-items-center">
-                                            <a asp-controller="Cart" asp-action="DecreaseQuantity" asp-route-productId="@item.ProductId" class="btn btn-sm btn-outline-secondary px-2 py-0" style="border-radius: 0;">-</a>
+                                            <a asp-controller="Cart" asp-action="DecreaseQuantity" asp-route-productId="@item.ProductId" asp-route-size="@item.Size" class="btn btn-sm btn-outline-secondary px-2 py-0" style="border-radius: 0;">-</a>
                                             <span class="px-3" style="min-width: 40px; text-align: center; font-weight: 500;">@item.Quantity</span>
-                                            <a asp-controller="Cart" asp-action="IncreaseQuantity" asp-route-productId="@item.ProductId" class="btn btn-sm btn-outline-secondary px-2 py-0" style="border-radius: 0;">+</a>
+                                            <a asp-controller="Cart" asp-action="IncreaseQuantity" asp-route-productId="@item.ProductId" asp-route-size="@item.Size" class="btn btn-sm btn-outline-secondary px-2 py-0" style="border-radius: 0;">+</a>
                                         </div>
                                     </td>
                                     <td class="py-4 text-end">
-                                        <a asp-action="RemoveFromCart" asp-route-productId="@item.ProductId" class="text-danger" style="text-decoration: none; font-size: 0.9rem; font-weight: 500;">
+                                        <a asp-action="RemoveFromCart" asp-route-productId="@item.ProductId" asp-route-size="@item.Size" class="text-danger" style="text-decoration: none; font-size: 0.9rem; font-weight: 500;">
                                             XÓA
                                         </a>
                                     </td>

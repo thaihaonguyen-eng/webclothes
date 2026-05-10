@@ -1,0 +1,119 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Areas/Shipper/Views/Shared/_ShipperLayout.cshtml";
+}
+
+<h4 class="mb-4 fw-bold" style="color: #064e3b;">
+    <i class="fas fa-gauge-high me-2"></i>Tổng quan giao hàng
+</h4>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="p-3 rounded-3 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.9; letter-spacing: 1px;">Chờ lấy hàng</div>
+                    <h3 class="fw-bold mt-1 mb-0">@ViewBag.WaitingPickup</h3>
+                </div>
+                <i class="fas fa-box" style="font-size: 1.8rem; opacity: 0.25;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="p-3 rounded-3 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #0ea5e9, #38bdf8);">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.9; letter-spacing: 1px;">Đang giao</div>
+                    <h3 class="fw-bold mt-1 mb-0">@ViewBag.Delivering</h3>
+                </div>
+                <i class="fas fa-truck" style="font-size: 1.8rem; opacity: 0.25;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="p-3 rounded-3 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #10b981, #34d399);">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.9; letter-spacing: 1px;">Hoàn thành</div>
+                    <h3 class="fw-bold mt-1 mb-0">@ViewBag.Completed</h3>
+                </div>
+                <i class="fas fa-check-circle" style="font-size: 1.8rem; opacity: 0.25;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="p-3 rounded-3 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #ef4444, #f87171);">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-uppercase" style="font-size: 0.7rem; opacity: 0.9; letter-spacing: 1px;">Thất bại</div>
+                    <h3 class="fw-bold mt-1 mb-0">@ViewBag.Failed</h3>
+                </div>
+                <i class="fas fa-times-circle" style="font-size: 1.8rem; opacity: 0.25;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tổng đơn cần xử lý -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="p-4 rounded-3 border" style="background: linear-gradient(135deg, #f0fdf4, #ecfdf5);">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background: linear-gradient(135deg, #0d7377, #2ecc71);">
+                        <i class="fas fa-motorcycle text-white" style="font-size: 1.4rem;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: #6b7280;">Tổng đơn đang cần bạn xử lý</div>
+                        <h3 class="fw-bold mb-0" style="color: #064e3b;">@ViewBag.TotalAssignable đơn</h3>
+                    </div>
+                </div>
+                <a href="/Shipper/Orders" class="btn text-white px-4" style="background: linear-gradient(135deg, #0d7377, #2ecc71); border: none;">
+                    <i class="fas fa-arrow-right me-1"></i> Xem đơn hàng
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Đơn gần đây -->
+<div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+    <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #064e3b, #0d7377);">
+        <i class="fas fa-clock me-2"></i>Đơn hàng cần giao gần đây
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0 align-middle text-center">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã ĐH</th>
+                    <th>Khách hàng</th>
+                    <th>Địa chỉ</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (ViewBag.RecentOrders != null)
+                {
+                    @foreach (var order in (List<webclothes.Models.Order>)ViewBag.RecentOrders)
+                    {
+                        var badgeColor = order.Status == "Chờ lấy hàng" ? "#f59e0b" : "#0ea5e9";
+                        <tr>
+                            <td><strong>#@order.Id</strong></td>
+                            <td>@order.CustomerName</td>
+                            <td class="text-start text-muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@order.Address</td>
+                            <td class="fw-bold" style="color: #dc2626;">@order.TotalAmount.ToString("N0") đ</td>
+                            <td><span class="badge rounded-pill text-white" style="background: @badgeColor;">@order.Status</span></td>
+                            <td>
+                                <a href="/Shipper/Orders/Details/@order.Id" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

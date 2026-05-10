@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore; // Thêm thư viện này
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using webclothes.Models;
 
 namespace webclothes.Data
 {
-    // ĐỔI DbContext THÀNH IdentityDbContext Ở DÒNG DƯỚI ĐÂY:
     public class ApplicationDbContext : IdentityDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -16,5 +15,12 @@ namespace webclothes.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
+        public DbSet<Review> Reviews { get; set; }
+        public DbSet<Voucher> Vouchers { get; set; }
+        public DbSet<Wishlist> Wishlists { get; set; }
+        public DbSet<CartEntry> CartEntries { get; set; }
+        public DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<ProductImage> ProductImages { get; set; }
     }
 }

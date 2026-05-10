@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36616.10 d17.14
+VisualStudioVersion = 17.14.36616.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "webclothes", "webclothes\webclothes.csproj", "{558C61B6-11E1-42AD-A2BF-16A1CB918C85}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebClothes.Tests", "WebClothes.Tests\WebClothes.Tests.csproj", "{19C64272-AA15-47FF-BEF6-781E7BEB0255}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{558C61B6-11E1-42AD-A2BF-16A1CB918C85}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{558C61B6-11E1-42AD-A2BF-16A1CB918C85}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{558C61B6-11E1-42AD-A2BF-16A1CB918C85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19C64272-AA15-47FF-BEF6-781E7BEB0255}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19C64272-AA15-47FF-BEF6-781E7BEB0255}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19C64272-AA15-47FF-BEF6-781E7BEB0255}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19C64272-AA15-47FF-BEF6-781E7BEB0255}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

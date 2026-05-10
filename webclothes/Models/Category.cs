@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace webclothes.Models
 {
@@ -10,6 +10,9 @@ namespace webclothes.Models
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
         public ICollection<Product> Products { get; set; } = new List<Product>();
+
+        public string? Slug { get; set; }
+        public bool IsDeleted { get; set; } = false;
 
         // Thêm trường hỗ trợ Danh mục con
         public int? ParentCategoryId { get; set; }

@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using webclothes.Data;
 using webclothes.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Text.Json;
 
 namespace webclothes.Controllers
 {
@@ -12,184 +12,332 @@ namespace webclothes.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly webclothes.Services.IEmailSender _emailSender;
+        private readonly webclothes.Services.INotificationService _notificationService;
+        private const string CartSessionKey = "CartSession";
 
-        public CartController(ApplicationDbContext context, webclothes.Services.IEmailSender emailSender)
+        public CartController(ApplicationDbContext context, 
+            webclothes.Services.IEmailSender emailSender,
+            webclothes.Services.INotificationService notificationService)
         {
             _context = context;
             _emailSender = emailSender;
+            _notificationService = notificationService;
         }
 
-        // 1. Thêm sản phẩm vào giỏ
-        [HttpPost]
-        public IActionResult AddToCart(int productId)
+        public IActionResult Index()
         {
-            var product = _context.Products.FirstOrDefault(p => p.Id == productId);
-            if (product == null)
+            var cart = GetCartItems();
+            return View(cart);
+        }
+
+        [HttpPost]
+        public IActionResult AddToCart(int productId, int quantity = 1, string? size = null)
+        {
+            var product = _context.Products.Find(productId);
+            if (product == null) return NotFound();
+
+            if (!string.IsNullOrEmpty(product.Size) && string.IsNullOrEmpty(size))
             {
-                return NotFound("Không tìm thấy sản phẩm");
+                TempData["CartError"] = "Vui lòng chọn kích cỡ (Size) trước khi thêm vào giỏ hàng.";
+                return RedirectToAction("Details", "Products", new { id = product.Slug ?? product.Id.ToString() });
             }
 
-            var cart = HttpContext.Session.Get<List<CartItem>>("MyCart") ?? new List<CartItem>();
-            var existingItem = cart.FirstOrDefault(c => c.ProductId == productId);
+            var cart = GetCartItems();
+            var item = cart.FirstOrDefault(c => c.ProductId == productId && c.Size == size);
 
-            if (existingItem != null)
+            if (item != null)
             {
-                existingItem.Quantity++;
+                item.Quantity += quantity;
             }
             else
             {
                 cart.Add(new CartItem
                 {
                     ProductId = product.Id,
-                    ProductName = product.Name,
-                    Price = product.Price,
-                    Quantity = 1
+                    ProductName = product.Name ?? "Sản phẩm",
+                    ProductImage = product.MainImageUrl ?? string.Empty,
+                    Price = product.DisplayPrice,
+                    Quantity = quantity,
+                    Size = size
                 });
             }
 
-            HttpContext.Session.Set("MyCart", cart);
-            TempData["SuccessMessage"] = $"Đã thêm {product.Name} vào giỏ hàng!";
-
-            return RedirectToAction("Index", "Home");
-        }
-
-        // 2. Xem giỏ hàng
-        public IActionResult Index()
-        {
-            var cart = HttpContext.Session.Get<List<CartItem>>("MyCart") ?? new List<CartItem>();
-            return View(cart);
-        }
-
-        // 3. Xóa sản phẩm khỏi giỏ hàng
-        public IActionResult RemoveFromCart(int productId)
-        {
-            var cart = HttpContext.Session.Get<List<CartItem>>("MyCart");
-
-            if (cart != null)
-            {
-                cart.RemoveAll(p => p.ProductId == productId);
-                HttpContext.Session.Set("MyCart", cart);
-            }
-
+            SaveCartItems(cart);
             return RedirectToAction("Index");
         }
 
-        public IActionResult IncreaseQuantity(int productId)
+        public IActionResult RemoveFromCart(int productId, string? size = null)
         {
-            var cart = HttpContext.Session.Get<List<CartItem>>("MyCart");
-            if (cart != null)
+            var cart = GetCartItems();
+            var item = cart.FirstOrDefault(c => c.ProductId == productId && c.Size == size);
+            if (item != null)
             {
-                var item = cart.FirstOrDefault(c => c.ProductId == productId);
-                if (item != null)
+                cart.Remove(item);
+                SaveCartItems(cart);
+            }
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public IActionResult UpdateQuantity(int productId, int quantity, string? size = null)
+        {
+            var cart = GetCartItems();
+            var item = cart.FirstOrDefault(c => c.ProductId == productId && c.Size == size);
+            if (item != null && quantity > 0)
+            {
+                item.Quantity = quantity;
+                SaveCartItems(cart);
+            }
+            return RedirectToAction("Index");
+        }
+
+        public IActionResult IncreaseQuantity(int productId, string? size = null)
+        {
+            var cart = GetCartItems();
+            var item = cart.FirstOrDefault(c => c.ProductId == productId && c.Size == size);
+            if (item != null)
+            {
+                var product = _context.Products.Find(productId);
+                if (product != null && item.Quantity < product.StockQuantity)
                 {
                     item.Quantity++;
+                    SaveCartItems(cart);
                 }
-                HttpContext.Session.Set("MyCart", cart);
+                else if (product != null)
+                {
+                    TempData["CartError"] = $"Sản phẩm '{product.Name}' chỉ còn {product.StockQuantity} mặt hàng!";
+                }
             }
             return RedirectToAction("Index");
         }
 
-        public IActionResult DecreaseQuantity(int productId)
+        public IActionResult DecreaseQuantity(int productId, string? size = null)
         {
-            var cart = HttpContext.Session.Get<List<CartItem>>("MyCart");
-            if (cart != null)
+            var cart = GetCartItems();
+            var item = cart.FirstOrDefault(c => c.ProductId == productId && c.Size == size);
+            if (item != null && item.Quantity > 1)
             {
-                var item = cart.FirstOrDefault(c => c.ProductId == productId);
-                if (item != null)
+                item.Quantity--;
+                SaveCartItems(cart);
+            }
+            return RedirectToAction("Index");
+        }
+
+        public IActionResult Checkout()
+        {
+            var cart = GetCartItems();
+            if (!cart.Any()) return RedirectToAction("Index");
+
+            decimal total = cart.Sum(i => i.Price * i.Quantity);
+            decimal discount = 0;
+            string? activeVoucher = HttpContext.Session.GetString("ActiveVoucherCode");
+
+            if (!string.IsNullOrEmpty(activeVoucher))
+            {
+                var voucher = _context.Vouchers.FirstOrDefault(v => v.Code == activeVoucher && v.Quantity > 0 && v.ExpiryDate >= DateTime.Now);
+                if (voucher != null)
                 {
-                    if (item.Quantity > 1)
+                    if (voucher.DiscountType == "Percent")
                     {
-                        item.Quantity--;
+                        discount = (total * (decimal)voucher.DiscountAmount) / 100;
+                        if (voucher.MaxDiscount > 0 && discount > voucher.MaxDiscount)
+                        {
+                            discount = voucher.MaxDiscount;
+                        }
                     }
                     else
                     {
-                        cart.Remove(item); // Nếu số lượng nhỏ hơn hoặc bằng 1 thì xóa luôn
+                        discount = (decimal)voucher.DiscountAmount;
                     }
                 }
-                HttpContext.Session.Set("MyCart", cart);
             }
-            return RedirectToAction("Index");
-        }
 
-        // ==========================================
-        // PHẦN MỚI THÊM: XỬ LÝ THANH TOÁN & ĐẶT HÀNG
-        // ==========================================
-
-        // 4. Hiển thị form điền thông tin thanh toán
-        [HttpGet]
-        public IActionResult Checkout()
-        {
-            var cart = HttpContext.Session.Get<List<CartItem>>("MyCart") ?? new List<CartItem>();
-
-            // Nếu giỏ hàng trống thì bắt quay về trang chủ
-            if (cart.Count == 0)
-            {
-                return RedirectToAction("Index", "Home");
-            }
+            ViewBag.Total = total;
+            ViewBag.Discount = discount;
+            ViewBag.FinalTotal = total - discount;
+            ViewBag.ActiveVoucher = activeVoucher;
 
             return View(cart);
         }
 
-        // 5. Xử lý lưu đơn hàng vào Database khi khách bấm "Xác nhận đặt hàng"
         [HttpPost]
-        public async Task<IActionResult> Checkout(string customerName, string phone, string address, string email)
+        public async Task<IActionResult> Checkout(string customerName, string phone, string address, string email, string paymentMethod)
         {
-            var cart = HttpContext.Session.Get<List<CartItem>>("MyCart") ?? new List<CartItem>();
-            if (cart.Count == 0) return RedirectToAction("Index", "Home");
+            var cart = GetCartItems();
+            if (!cart.Any()) return RedirectToAction("Index");
 
-            // B1: Tạo Đơn hàng mới
-            var order = new Order
+            decimal total = cart.Sum(i => i.Price * i.Quantity);
+            decimal discount = 0;
+            string? voucherCode = HttpContext.Session.GetString("ActiveVoucherCode");
+
+            if (!string.IsNullOrEmpty(voucherCode))
             {
-                CustomerName = customerName,
-                Phone = phone,
-                Address = address,
-                OrderDate = DateTime.Now,
-                TotalAmount = cart.Sum(c => c.Price * c.Quantity),
-                Status = "Chờ xử lý",
-                UserId = User.Identity.IsAuthenticated ? User.Identity.Name : null
-            };
-
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
-
-            // B2: Tạo Chi tiết
-            foreach (var item in cart)
-            {
-                var orderDetail = new OrderDetail
+                var v = _context.Vouchers.FirstOrDefault(x => x.Code == voucherCode);
+                if (v != null && v.Quantity > 0 && v.ExpiryDate >= DateTime.Now)
                 {
-                    OrderId = order.Id,
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity,
-                    Price = item.Price
-                };
-                _context.OrderDetails.Add(orderDetail);
+                    if (v.DiscountType == "Percent")
+                    {
+                        discount = (total * (decimal)v.DiscountAmount) / 100;
+                        if (v.MaxDiscount > 0 && discount > v.MaxDiscount) discount = v.MaxDiscount;
+                    }
+                    else discount = (decimal)v.DiscountAmount;
+
+                    v.Quantity--;
+                }
             }
-            await _context.SaveChangesAsync();
 
-            // Lưu thông tin để hiện mã QR
-            HttpContext.Session.SetString("OrderTotal", order.TotalAmount.ToString());
-            HttpContext.Session.SetString("OrderId", order.Id.ToString());
-
-            // Gửi email xác nhận nếu có nhập email
-            if (!string.IsNullOrEmpty(email))
+            Order? order = null;
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                string subject = $"Xác nhận đơn hàng #{order.Id} từ WEBCLOTHES";
-                string message = $"<h3>Xin chào {customerName},</h3><p>Cảm ơn bạn đã đặt hàng. Tổng số tiền: <strong>{order.TotalAmount:N0} VNĐ</strong>.</p><p>Đơn hàng sẽ được giao đến: {address}</p>";
-                await _emailSender.SendEmailAsync(email, subject, message);
+                try
+                {
+                    foreach (var item in cart)
+                    {
+                        var productCheck = await _context.Products.FindAsync(item.ProductId);
+                        if (productCheck == null || productCheck.StockQuantity < item.Quantity)
+                        {
+                            TempData["CartError"] = $"Rất tiếc! '{item.ProductName}' chỉ còn lại {(productCheck?.StockQuantity ?? 0)} sản phẩm. Vui lòng cập nhật lại giỏ hàng.";
+                            return RedirectToAction("Index");
+                        }
+                    }
+
+                    order = new Order
+                    {
+                        CustomerName = customerName,
+                        Phone = phone,
+                        Address = address,
+                        OrderDate = DateTime.Now,
+                        TotalAmount = total - discount,
+                        DiscountAmount = discount,
+                        VoucherCode = voucherCode,
+                        Status = paymentMethod == "VNPAY" ? "Chờ thanh toán VNPay" : "Chờ xử lý",
+                        UserId = GetCurrentUserId() ?? email
+                    };
+
+                    _context.Orders.Add(order);
+                    await _context.SaveChangesAsync();
+
+                    foreach (var item in cart)
+                    {
+                        var product = await _context.Products.FindAsync(item.ProductId);
+                        if (product != null)
+                        {
+                            product.StockQuantity -= item.Quantity;
+                        }
+
+                        _context.OrderDetails.Add(new OrderDetail
+                        {
+                            OrderId = order.Id,
+                            ProductId = item.ProductId,
+                            Quantity = item.Quantity,
+                            Price = item.Price,
+                            Size = item.Size
+                        });
+                    }
+
+                    _context.OrderStatusHistories.Add(new OrderStatusHistory
+                    {
+                        OrderId = order.Id,
+                        Status = order.Status,
+                        ChangedAt = DateTime.Now,
+                        ChangedBy = customerName
+                    });
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    HttpContext.Session.Remove(CartSessionKey);
+                    HttpContext.Session.Remove("ActiveVoucherCode");
+
+                    // QR logic
+                    HttpContext.Session.SetString("OrderId", order.Id.ToString());
+                    HttpContext.Session.SetString("OrderTotal", (total - discount).ToString());
+
+                    // Send Confirmation Email
+                    string toEmail = email ?? GetCurrentUserId() ?? "khachhang@example.com";
+                    string emailSubject = $"Xác nhận đơn hàng #{order.Id} từ WEBCLOTHES";
+                    string emailBody = $@"
+                        <h3>Cảm ơn bạn đã đặt hàng tại WEBCLOTHES!</h3>
+                        <p>Mã đơn hàng của bạn là: <strong>#{order.Id}</strong></p>
+                        <p>Tổng tiền: <strong>{(total - discount):N0} VNĐ</strong></p>
+                        <p>Trạng thái: <strong>{order.Status}</strong></p>
+                        <p>Chúng tôi sẽ sớm liên hệ để giao hàng cho bạn.</p>
+                    ";
+                    try
+                    {
+                        await _emailSender.SendEmailAsync(toEmail, emailSubject, emailBody);
+                    }
+                    catch (Exception)
+                    {
+                        // Ignore email failure
+                    }
+
+                    // Notify Seller
+                    await _notificationService.NotifyRoleAsync(
+                        "Seller",
+                        "Đơn hàng mới từ khách hàng",
+                        $"Khách hàng {customerName} vừa đặt đơn #{order.Id} trị giá {(total - discount):N0} đ.",
+                        "primary",
+                        $"/Seller/Orders/Details/{order.Id}");
+                }
+                catch (Exception)
+                {
+                    await transaction.RollbackAsync();
+                    TempData["CartError"] = "Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại.";
+                    return RedirectToAction("Index");
+                }
             }
 
-            HttpContext.Session.Remove("MyCart");
+            if (paymentMethod == "VNPAY")
+            {
+                return RedirectToAction("Payment", "VNPay", new { orderId = order.Id });
+            }
+
             return RedirectToAction("OrderSuccess");
         }
 
-        // 6. Trang thông báo đặt hàng thành công
+        [HttpPost]
+        public IActionResult ApplyVoucher(string code)
+        {
+            var cart = GetCartItems();
+            decimal total = cart.Sum(i => i.Price * i.Quantity);
+
+            var voucher = _context.Vouchers.FirstOrDefault(v => v.Code == code);
+            if (voucher == null)
+            {
+                TempData["VoucherError"] = "Mã giảm giá không tồn tại.";
+            }
+            else if (voucher.Quantity <= 0)
+            {
+                TempData["VoucherError"] = "Mã giảm giá đã hết lượt sử dụng.";
+            }
+            else if (voucher.ExpiryDate < DateTime.Now)
+            {
+                TempData["VoucherError"] = "Mã giảm giá đã hết hạn.";
+            }
+            else if (voucher.MinOrderAmount > 0 && total < voucher.MinOrderAmount)
+            {
+                TempData["VoucherError"] = $"Đơn hàng tối thiểu {voucher.MinOrderAmount:N0} đ mới được dùng mã này.";
+            }
+            else
+            {
+                HttpContext.Session.SetString("ActiveVoucherCode", code);
+                string msg = voucher.DiscountType == "Percent"
+                    ? $"Áp dụng mã {code} thành công! (Giảm {voucher.DiscountAmount}%, tối đa {voucher.MaxDiscount:N0} đ)"
+                    : $"Áp dụng mã {code} thành công! (Giảm {voucher.DiscountAmount:N0} đ)";
+                TempData["SuccessMessage"] = msg;
+            }
+
+            return RedirectToAction("Checkout");
+        }
+
         public IActionResult OrderSuccess()
         {
             return View();
         }
-        // Hàm mới xử lý Add to Cart bằng Ajax
+
         [HttpPost]
-        public IActionResult AddToCartAjax([FromForm] int productId)
+        public IActionResult AddToCartAjax([FromForm] int productId, [FromForm] string? size)
         {
             var product = _context.Products.FirstOrDefault(p => p.Id == productId);
             if (product == null)
@@ -197,38 +345,63 @@ namespace webclothes.Controllers
                 return Json(new { success = false, message = "Không tìm thấy sản phẩm" });
             }
 
-            var cart = HttpContext.Session.Get<List<CartItem>>("MyCart") ?? new List<CartItem>();
-            var existingItem = cart.FirstOrDefault(c => c.ProductId == productId);
+            if (!string.IsNullOrEmpty(product.Size) && string.IsNullOrEmpty(size))
+            {
+                return Json(new { success = false, message = "Vui lòng chọn kích cỡ (Size)." });
+            }
+
+            var cart = GetCartItems();
+            var existingItem = cart.FirstOrDefault(c => c.ProductId == productId && c.Size == size);
+            var requestedQuantity = (existingItem?.Quantity ?? 0) + 1;
+
+            if (product.StockQuantity < requestedQuantity)
+            {
+                return Json(new { success = false, message = $"Sản phẩm chỉ còn {product.StockQuantity} mặt hàng trong kho!" });
+            }
 
             if (existingItem != null)
             {
                 existingItem.Quantity++;
+                existingItem.Price = product.DisplayPrice;
             }
             else
             {
                 cart.Add(new CartItem
                 {
                     ProductId = product.Id,
-                    ProductName = product.Name,
-                    Price = product.Price,
+                    ProductName = product.Name ?? "Sản phẩm",
+                    ProductImage = product.MainImageUrl ?? string.Empty,
+                    Price = product.DisplayPrice,
                     Quantity = 1,
-                    // Nếu Model CartItem chưa có ImageName thì bỏ dòng dưới đi nhé
-                    // ImageName = product.ImageName 
+                    Size = size
                 });
             }
 
-            HttpContext.Session.Set("MyCart", cart);
-
-            // Đếm xem trong giỏ đang có tổng bao nhiêu món đồ
+            SaveCartItems(cart);
             int totalItems = cart.Sum(c => c.Quantity);
 
-            // Trả về dữ liệu JSON cho Javascript xử lý
             return Json(new
             {
                 success = true,
-                message = $"Đã thêm {product.Name} vào giỏ hàng!",
-                cartCount = totalItems
+                message = "Đã thêm vào giỏ hàng!",
+                totalItems = totalItems
             });
+        }
+
+        private List<CartItem> GetCartItems()
+        {
+            var sessionData = HttpContext.Session.GetString(CartSessionKey);
+            return sessionData == null ? new List<CartItem>() : JsonSerializer.Deserialize<List<CartItem>>(sessionData)!;
+        }
+
+        private void SaveCartItems(List<CartItem> cart)
+        {
+            HttpContext.Session.SetString(CartSessionKey, JsonSerializer.Serialize(cart));
+        }
+
+        private string? GetCurrentUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier);
         }
     }
 }

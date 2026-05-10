@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using webclothes.Data;
 using webclothes.Models;
@@ -18,7 +18,9 @@ namespace webclothes.Controllers
         {
             // L?y 8 s?n ph?m m?i nh?t ?? hi?n ra trang ch?
             var products = await _context.Products
+                .AsNoTracking()
                 .Include(p => p.Category)
+                .Where(p => !p.IsDeleted && !p.Category.IsDeleted)
                 .OrderByDescending(p => p.Id)
                 .Take(8)
                 .ToListAsync();

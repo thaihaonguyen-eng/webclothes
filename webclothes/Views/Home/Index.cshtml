@@ -1,4 +1,4 @@
-@model IEnumerable<webclothes.Models.Product>
+﻿@model IEnumerable<webclothes.Models.Product>
 
 @{
     ViewData["Title"] = "Trang chủ";
@@ -29,35 +29,63 @@
             @foreach (var item in Model)
             {
                 <div class="col-lg-3 col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="@delay">
-                    <div class="product-card h-100">
+                    <div class="product-card h-100 position-relative">
+                        @if(item.StockQuantity <= 0)
+                        {
+                            <div class="position-absolute w-100 h-100 d-flex justify-content-center align-items-center" style="background: rgba(255,255,255,0.7); z-index: 10;">
+                                <span class="badge bg-danger fs-5 px-4 py-2 text-uppercase" style="transform: rotate(-15deg);">HẾT HÀNG</span>
+                            </div>
+                        }
+                        
                         <div class="product-img-wrapper">
-                            @if (!string.IsNullOrEmpty(item.ImageName))
+                            @if (!string.IsNullOrEmpty(item.MainImageUrl))
                             {
-                                <img src="~/images/products/@item.ImageName" alt="@item.Name" loading="lazy" />
+                                <img src="@item.MainImageUrl" alt="@item.Name" loading="lazy" />
                             }
                             else
                             {
                                 <img src="https://images.unsplash.com/photo-1515347619253-122cb41a4a16?q=80&w=600&auto=format&fit=crop" alt="@item.Name" loading="lazy" />
                             }
 
-                            @if (item.Price < 500000)
+                            @if (item.IsOnSale)
+                            {
+                                <span class="badge-custom" style="background: linear-gradient(135deg, #ef4444, #f97316);">SALE -@(Math.Round((1 - item.SalePrice!.Value / item.Price) * 100))%</span>
+                            }
+                            else if (item.Price < 500000 && item.StockQuantity > 0)
                             {
                                 <span class="badge-custom">HOT</span>
                             }
                         </div>
 
                         <div class="product-info">
-                            <a asp-controller="Products" asp-action="Details" asp-route-id="@item.Id" class="product-title">
+                            <a asp-controller="Products" asp-action="Details" asp-route-id="@(item.Slug ?? item.Id.ToString())" class="product-title">
                                 @item.Name
                             </a>
                             <div class="product-price">
-                                @item.Price.ToString("N0") <span style="font-size: 0.8rem;">VNĐ</span>
+                                @if (item.IsOnSale)
+                                {
+                                    <span class="text-decoration-line-through text-muted me-1" style="font-size: 0.8rem;">@item.Price.ToString("N0")</span>
+                                    <span>@item.DisplayPrice.ToString("N0") <small>VNĐ</small></span>
+                                }
+                                else
+                                {
+                                    @item.Price.ToString("N0") <span style="font-size: 0.8rem;">VNĐ</span>
+                                }
                             </div>
 
-                            <!-- Button triggers the ajax event binding in Layout/Index scripts -->
-                            <button type="button" class="btn-buy btn-add-cart w-100" data-id="@item.Id">
-                                <i class="fa-solid fa-cart-plus me-2"></i> Thêm vào giỏ
-                            </button>
+                            @if(item.StockQuantity > 0)
+                            {
+                                <!-- Button triggers the ajax event binding in Layout/Index scripts -->
+                                <button type="button" class="btn-buy btn-add-cart w-100" data-id="@item.Id">
+                                    <i class="fa-solid fa-cart-plus me-2"></i> Thêm vào giỏ
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-secondary w-100 rounded-pill" disabled style="height: 40px; font-weight: 500;">
+                                    <i class="fa-solid fa-times-circle me-2"></i> HẾT HÀNG
+                                </button>
+                            }
                         </div>
                     </div>
                 </div>
@@ -175,7 +203,7 @@
                         // Cập nhật số lượng
                         let cartCounter = document.getElementById('cart-counter');
                         if(cartCounter) {
-                            cartCounter.innerText = data.cartCount;
+                            cartCounter.innerText = data.totalItems;
                             
                             // Hiệu ứng zoom nhẹ cho icon giỏ hàng
                             cartCounter.style.transform = "scale(1.3)";
